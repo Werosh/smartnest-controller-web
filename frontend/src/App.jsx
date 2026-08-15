@@ -6,6 +6,7 @@ import Modules from './pages/Modules';
 import Energy from './pages/Energy';
 import Schedules from './pages/Schedules';
 import Alerts from './pages/Alerts';
+import History from './pages/History';
 import Admin from './pages/Admin';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
@@ -119,6 +120,16 @@ export default function App() {
               <ProtectedRoute>
                 <AppShell>
                   <Alerts />
+                </AppShell>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/history"
+            element={
+              <ProtectedRoute>
+                <AppShell>
+                  <History />
                 </AppShell>
               </ProtectedRoute>
             }
