@@ -62,14 +62,33 @@ function WeatherWidget() {
       setLoading(false);
     }
 
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => fetchWeather(position.coords.latitude, position.coords.longitude),
-        () => fetchWeather(51.5085, -0.1257) // Fallback London
-      );
-    } else {
-      fetchWeather(51.5085, -0.1257);
+    async function initLocation() {
+      // Try IP Geolocation first for seamless experience
+      try {
+        const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.latitude && data.longitude) {
+            fetchWeather(data.latitude, data.longitude);
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('IP Geolocation failed, trying browser geolocation...', e);
+      }
+
+      // Fallback to browser geolocation if IP fails
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => fetchWeather(position.coords.latitude, position.coords.longitude),
+          () => fetchWeather(51.5085, -0.1257) // Fallback London
+        );
+      } else {
+        fetchWeather(51.5085, -0.1257);
+      }
     }
+
+    initLocation();
   }, []);
 
   if (loading) {
