@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { Bell, Cloud, Sun, AlertTriangle } from 'lucide-react';
+import { Bell, Cloud, Sun, AlertTriangle, CloudRain, CloudSnow, CloudLightning, Moon } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
@@ -34,6 +34,100 @@ function timeAgo(ts) {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
+}
+
+function WeatherWidget() {
+  const [weather, setWeather] = useState(null);
+  const [locationName, setLocationName] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchWeather(lat, lon) {
+      try {
+        const [weatherRes, locRes] = await Promise.all([
+          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`),
+          fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`)
+        ]);
+        
+        const weatherData = await weatherRes.json();
+        const locData = await locRes.json();
+
+        if (weatherData.current_weather) {
+          setWeather(weatherData.current_weather);
+          setLocationName(locData.city || locData.locality || locData.principalSubdivision || 'Unknown');
+        }
+      } catch (err) {
+        console.error("Failed to fetch weather", err);
+      }
+      setLoading(false);
+    }
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => fetchWeather(position.coords.latitude, position.coords.longitude),
+        () => fetchWeather(51.5085, -0.1257) // Fallback London
+      );
+    } else {
+      fetchWeather(51.5085, -0.1257);
+    }
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="hidden sm:flex items-center gap-2 bg-bg border border-border rounded-full px-3 py-1.5 animate-pulse">
+        <div className="w-3.5 h-3.5 bg-border rounded-full" />
+        <div className="w-10 h-3 bg-border rounded" />
+      </div>
+    );
+  }
+
+  if (!weather) return null;
+
+  const temp = Math.round(weather.temperature);
+  const code = weather.weathercode;
+  const isDay = weather.is_day === 1;
+
+  let Icon = Cloud;
+  let color = "text-muted";
+  let label = "Cloudy";
+
+  if (code === 0) {
+    Icon = isDay ? Sun : Moon;
+    color = isDay ? "text-yellow-400" : "text-blue-200";
+    label = "Clear";
+  } else if ([1, 2, 3].includes(code)) {
+    Icon = isDay ? Sun : Cloud;
+    color = isDay ? "text-yellow-200" : "text-gray-400";
+    label = "Partly Cloudy";
+  } else if ([51, 53, 55, 56, 57].includes(code)) {
+    Icon = CloudRain;
+    color = "text-blue-300";
+    label = "Drizzle";
+  } else if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) {
+    Icon = CloudRain;
+    color = "text-blue-400";
+    label = "Rain";
+  } else if ([71, 73, 75, 77, 85, 86].includes(code)) {
+    Icon = CloudSnow;
+    color = "text-white";
+    label = "Snow";
+  } else if ([95, 96, 99].includes(code)) {
+    Icon = CloudLightning;
+    color = "text-purple-400";
+    label = "Storm";
+  }
+
+  return (
+    <div className="hidden sm:flex items-center gap-2 bg-bg border border-border rounded-full px-3 py-1.5 transition-all hover:border-accent/40" title="Local Weather">
+      <Icon className={`w-3.5 h-3.5 ${color}`} />
+      <span className="text-text text-xs font-medium">{temp}°C</span>
+      <span className="text-muted text-xs flex items-center gap-1.5">
+        <span>{label}</span>
+        <span className="w-1 h-1 rounded-full bg-border" />
+        <span className="font-medium text-text/80">{locationName}</span>
+      </span>
+    </div>
+  );
 }
 
 export default function TopBar() {
@@ -110,11 +204,7 @@ export default function TopBar() {
       {/* Right: weather chip, clock, notification bell */}
       <div className="flex items-center gap-4">
         {/* Weather chip */}
-        <div className="hidden sm:flex items-center gap-2 bg-bg border border-border rounded-full px-3 py-1.5">
-          <Sun className="w-3.5 h-3.5 text-yellow-400" />
-          <span className="text-text text-xs font-medium">28°C</span>
-          <span className="text-muted text-xs">Sunny</span>
-        </div>
+        <WeatherWidget />
 
         {/* Clock */}
         <div className="hidden md:block">
