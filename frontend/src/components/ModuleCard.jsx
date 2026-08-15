@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect as import_react_useEffect } from 'react';
 import { Lightbulb, Fan, Plug, Timer, MoreVertical, Trash2, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -38,16 +38,37 @@ export default function ModuleCard({ module, isAdmin, onDelete }) {
 
   const Icon = TYPE_ICONS[module.type] ?? Plug;
   const colors = TYPE_COLORS[module.type] ?? TYPE_COLORS.outlet;
-  const isOn = module.desired_state;
+  
+  // Use local state for optimistic UI updates
+  const [isOn, setIsOn] = useState(module.desired_state);
+
+  // Sync local state if the server state changes (e.g. via realtime or initial load)
+  import_react_useEffect(() => {
+    setIsOn(module.desired_state);
+  }, [module.desired_state]);
 
   async function handleToggle() {
     if (toggling) return;
+    
+    // Optimistic update
+    const previousState = isOn;
+    setIsOn(!previousState);
     setToggling(true);
+    
     try {
-      await supabase
+      const { error } = await supabase
         .from('modules')
-        .update({ desired_state: !isOn })
+        .update({ desired_state: !previousState })
         .eq('id', module.id);
+        
+      if (error) {
+        // Revert on error
+        setIsOn(previousState);
+        console.error("Failed to toggle module:", error);
+        alert("Failed to toggle module: " + error.message);
+      }
+    } catch (err) {
+      setIsOn(previousState);
     } finally {
       setToggling(false);
     }
