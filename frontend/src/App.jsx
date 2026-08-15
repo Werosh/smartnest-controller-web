@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './lib/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Modules from './pages/Modules';
+import Energy from './pages/Energy';
 import Admin from './pages/Admin';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
@@ -86,6 +87,16 @@ export default function App() {
               <ProtectedRoute>
                 <AppShell>
                   <Modules />
+                </AppShell>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/energy"
+            element={
+              <ProtectedRoute>
+                <AppShell>
+                  <Energy />
                 </AppShell>
               </ProtectedRoute>
             }
