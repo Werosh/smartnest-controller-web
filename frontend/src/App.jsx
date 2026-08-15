@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Modules from './pages/Modules';
 import Admin from './pages/Admin';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
@@ -75,6 +76,16 @@ export default function App() {
               <ProtectedRoute>
                 <AppShell>
                   <Dashboard />
+                </AppShell>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/modules"
+            element={
+              <ProtectedRoute>
+                <AppShell>
+                  <Modules />
                 </AppShell>
               </ProtectedRoute>
             }

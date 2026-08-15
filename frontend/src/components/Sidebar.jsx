@@ -7,7 +7,7 @@ import { useAuth } from '../lib/AuthContext';
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { id: 'modules', label: 'Modules', icon: Cpu, path: '/dashboard#modules' },
+  { id: 'modules', label: 'Modules', icon: Cpu, path: '/modules' },
   { id: 'energy', label: 'Energy', icon: BarChart2, path: '/dashboard#energy' },
   { id: 'schedules', label: 'Schedules', icon: Calendar, path: '/dashboard#schedules' },
   { id: 'alerts', label: 'Alerts', icon: Bell, path: '/dashboard#alerts' },
@@ -45,7 +45,7 @@ export default function Sidebar() {
           <button
             key={id}
             id={`nav-${id}`}
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(path)}
             className={`nav-item w-full ${isActive(path) ? 'active' : ''}`}
           >
             <Icon className="w-4 h-4 flex-shrink-0" />
