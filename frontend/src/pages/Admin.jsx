@@ -12,9 +12,11 @@ function UsersTable() {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [showModal, setShowModal] = useState(false);
+
   async function fetchProfiles() {
     setLoading(true);
-    const { data } = await supabase.from('profiles').select('*').order('created_at');
+    const { data } = await supabase.from('profiles').select('*, modules(*)').order('created_at');
     if (data) setProfiles(data);
     setLoading(false);
   }
@@ -35,10 +37,19 @@ function UsersTable() {
           <h2 className="text-text font-semibold text-base">User Management</h2>
           <span className="badge badge-muted">{profiles.length} users</span>
         </div>
-        <button onClick={fetchProfiles} className="btn-ghost text-xs flex items-center gap-1.5">
-          <RefreshCw className="w-3.5 h-3.5" />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={fetchProfiles} className="btn-ghost text-xs flex items-center gap-1.5">
+            <RefreshCw className="w-3.5 h-3.5" />
+            Refresh
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="btn-primary text-xs py-2 px-3 flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Assign Module
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -54,7 +65,7 @@ function UsersTable() {
               <tr className="text-left text-muted text-xs uppercase tracking-wide border-b border-border">
                 <th className="pb-3 font-medium">User</th>
                 <th className="pb-3 font-medium">Role</th>
-                <th className="pb-3 font-medium">Joined</th>
+                <th className="pb-3 font-medium">Assigned Modules</th>
                 <th className="pb-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -81,8 +92,19 @@ function UsersTable() {
                       {p.role}
                     </span>
                   </td>
-                  <td className="py-3.5 pr-4 text-muted text-xs">
-                    {new Date(p.created_at).toLocaleDateString()}
+                  <td className="py-3.5 pr-4">
+                    {p.modules && p.modules.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {p.modules.map(m => (
+                          <span key={m.id} className="badge badge-muted text-[10px] capitalize flex items-center gap-1">
+                            <span className={`w-1.5 h-1.5 rounded-full ${m.state ? 'bg-green-400' : 'bg-gray-400'}`} />
+                            {m.name} ({m.type})
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted text-xs italic">No modules</span>
+                    )}
                   </td>
                   <td className="py-3.5 text-right">
                     {p.id !== currentUser?.id && (
@@ -112,129 +134,11 @@ function UsersTable() {
           Promote them here after signup.
         </p>
       </div>
-    </div>
-  );
-}
-
-// ────────────────────────────────────────────────────────────
-// Module Management Table
-// ────────────────────────────────────────────────────────────
-function ModulesTable() {
-  const [modules, setModules] = useState([]);
-  const [profiles, setProfiles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-
-  async function fetchModulesAndProfiles() {
-    setLoading(true);
-    const [modulesRes, profilesRes] = await Promise.all([
-      supabase.from('modules').select('*, profiles(name)').order('name'),
-      supabase.from('profiles').select('*').order('name')
-    ]);
-    if (modulesRes.data) setModules(modulesRes.data);
-    if (profilesRes.data) setProfiles(profilesRes.data);
-    setLoading(false);
-  }
-
-  useEffect(() => { fetchModulesAndProfiles(); }, []);
-
-  async function deleteModule(id) {
-    if (!window.confirm(`Delete module "${id}"? All readings and alerts for this module will also be removed.`)) return;
-    await supabase.from('modules').delete().eq('id', id);
-    setModules(prev => prev.filter(m => m.id !== id));
-  }
-
-  return (
-    <div className="card p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Cpu className="w-4 h-4 text-muted" />
-          <h2 className="text-text font-semibold text-base">Module Registry</h2>
-          <span className="badge badge-muted">{modules.length} modules</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={fetchModulesAndProfiles} className="btn-ghost text-xs flex items-center gap-1.5">
-            <RefreshCw className="w-3.5 h-3.5" />
-            Refresh
-          </button>
-          <button
-            id="admin-add-module-btn"
-            onClick={() => setShowModal(true)}
-            className="btn-primary text-xs py-2 px-3 flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add Module
-          </button>
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-14 bg-bg rounded-xl animate-pulse" />
-          ))}
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-muted text-xs uppercase tracking-wide border-b border-border">
-                <th className="pb-3 font-medium">Module</th>
-                <th className="pb-3 font-medium">Type</th>
-                <th className="pb-3 font-medium">Owner</th>
-                <th className="pb-3 font-medium">State</th>
-                <th className="pb-3 font-medium">Power</th>
-                <th className="pb-3 font-medium text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {modules.map(m => (
-                <tr key={m.id} className="hover:bg-bg/40 transition-colors">
-                  <td className="py-3.5 pr-4">
-                    <p className="text-text font-medium">{m.name}</p>
-                    <p className="text-muted text-xs font-mono">{m.id}</p>
-                  </td>
-                  <td className="py-3.5 pr-4">
-                    <span className="badge badge-muted capitalize">{m.type}</span>
-                  </td>
-                  <td className="py-3.5 pr-4 text-text font-medium text-xs">
-                    {m.profiles?.name || 'Unknown'}
-                  </td>
-                  <td className="py-3.5 pr-4">
-                    <span className={`badge ${m.state ? 'badge-green' : 'badge-muted'}`}>
-                      {m.state ? 'ON' : 'OFF'}
-                    </span>
-                  </td>
-                  <td className="py-3.5 pr-4 text-text font-medium">
-                    {m.watts.toFixed(1)} W
-                  </td>
-                  <td className="py-3.5 text-right">
-                    <button
-                      id={`delete-module-${m.id}`}
-                      onClick={() => deleteModule(m.id)}
-                      className="text-muted hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-red-500/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {modules.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="py-10 text-center text-muted text-sm">
-                    No modules registered yet
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
 
       {showModal && (
         <AddModuleModal
           onClose={() => setShowModal(false)}
-          onAdded={fetchModulesAndProfiles}
+          onAdded={fetchProfiles}
           profiles={profiles}
         />
       )}
@@ -242,9 +146,8 @@ function ModulesTable() {
   );
 }
 
-// ────────────────────────────────────────────────────────────
-// Admin Page
-// ────────────────────────────────────────────────────────────
+
+
 export default function Admin() {
   return (
     <div className="space-y-6 animate-fade-in">
@@ -260,7 +163,6 @@ export default function Admin() {
       </div>
 
       <UsersTable />
-      <ModulesTable />
 
       {/* Manual admin promotion reminder */}
       <div className="card p-5 border-yellow-500/20">

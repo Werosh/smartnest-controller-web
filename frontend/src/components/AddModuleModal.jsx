@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Lightbulb, Fan, Plug, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../lib/AuthContext';
 
 const TYPES = [
   { value: 'bulb',   label: 'Light Bulb',    Icon: Lightbulb },
@@ -9,6 +10,10 @@ const TYPES = [
 ];
 
 export default function AddModuleModal({ onClose, onAdded, profiles = [] }) {
+  const { profile: currentProfile } = useAuth();
+  const isAdmin = currentProfile?.role === 'admin';
+  const showOwnerDropdown = isAdmin && profiles.length > 0;
+
   const [id,   setId]   = useState('');
   const [name, setName] = useState('');
   const [type, setType] = useState('outlet');
@@ -27,15 +32,19 @@ export default function AddModuleModal({ onClose, onAdded, profiles = [] }) {
       setError('Module ID must be lowercase letters, numbers, and hyphens only.');
       return;
     }
-    if (!ownerId) {
+    
+    // Determine the actual owner ID to use
+    const finalOwnerId = showOwnerDropdown ? ownerId : currentProfile?.id;
+    if (!finalOwnerId) {
       setError('You must assign an owner to this module.');
       return;
     }
+    
     setLoading(true);
     try {
       const { error: dbErr } = await supabase
         .from('modules')
-        .insert({ id: id.trim(), name: name.trim(), type, owner_id: ownerId });
+        .insert({ id: id.trim(), name: name.trim(), type, owner_id: finalOwnerId });
       if (dbErr) throw dbErr;
       onAdded?.();
       onClose();
@@ -86,22 +95,24 @@ export default function AddModuleModal({ onClose, onAdded, profiles = [] }) {
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-muted mb-1.5">
-              Owner <span className="text-red-400">*</span>
-            </label>
-            <select
-              id="module-owner-input"
-              value={ownerId}
-              onChange={e => setOwnerId(e.target.value)}
-              className="input"
-            >
-              <option value="" disabled>Select a user...</option>
-              {profiles.map(p => (
-                <option key={p.id} value={p.id}>{p.name} ({p.role})</option>
-              ))}
-            </select>
-          </div>
+          {showOwnerDropdown && (
+            <div>
+              <label className="block text-xs font-medium text-muted mb-1.5">
+                Owner <span className="text-red-400">*</span>
+              </label>
+              <select
+                id="module-owner-input"
+                value={ownerId}
+                onChange={e => setOwnerId(e.target.value)}
+                className="input"
+              >
+                <option value="" disabled>Select a user...</option>
+                {profiles.map(p => (
+                  <option key={p.id} value={p.id}>{p.name} ({p.role})</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-medium text-muted mb-2">

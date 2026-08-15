@@ -57,15 +57,13 @@ export default function Modules() {
           <h2 className="text-xl font-semibold text-text">All Modules</h2>
           <span className="badge badge-muted ml-2">{modules.length}</span>
         </div>
-        {isAdmin && (
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="btn-primary text-sm py-2 px-4 flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add New Module
-          </button>
-        )}
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="btn-primary text-sm py-2 px-4 flex items-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add New Module
+        </button>
       </div>
 
       {loadingModules ? (
@@ -78,11 +76,9 @@ export default function Modules() {
         <div className="card p-12 flex flex-col items-center justify-center text-muted gap-4">
           <Cpu className="w-12 h-12 opacity-30" />
           <p className="text-base">No modules registered yet</p>
-          {isAdmin && (
-            <button onClick={() => setShowAddModal(true)} className="btn-primary text-sm py-2 px-6">
-              Register First Module
-            </button>
-          )}
+          <button onClick={() => setShowAddModal(true)} className="btn-primary text-sm py-2 px-6">
+            Register First Module
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

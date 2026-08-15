@@ -71,27 +71,29 @@ create policy "update own or admin modules" on modules for update to authenticat
     or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
   );
 
-drop policy if exists "admin insert modules" on modules;
--- INSERT: admin only
-create policy "admin insert modules" on modules for insert to authenticated
+drop policy if exists "insert own or admin modules" on modules;
+-- INSERT: owners can insert their own modules; admin can insert any
+create policy "insert own or admin modules" on modules for insert to authenticated
   with check (
-    exists (select 1 from profiles where id = auth.uid() and role = 'admin')
+    owner_id = auth.uid()
+    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
   );
 
-drop policy if exists "admin delete modules" on modules;
--- DELETE: admin only
-create policy "admin delete modules" on modules for delete to authenticated
+drop policy if exists "delete own or admin modules" on modules;
+-- DELETE: owners can delete their own modules; admin can delete any
+create policy "delete own or admin modules" on modules for delete to authenticated
   using (
-    exists (select 1 from profiles where id = auth.uid() and role = 'admin')
+    owner_id = auth.uid()
+    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
   );
 
 drop policy if exists "read own readings or admin" on readings;
--- READINGS & ALERTS: isolated by module ownership
+-- READINGS & ALERTS: isolated by module ownership, admin sees all
 create policy "read own readings or admin" on readings for select to authenticated
   using (
     exists (
-      select 1 from modules m
-      where m.id = readings.module_id
+      select 1 from modules m 
+      where m.id = readings.module_id 
       and (m.owner_id = auth.uid() or exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin'))
     )
   );
@@ -100,8 +102,8 @@ drop policy if exists "read own alerts or admin" on alerts;
 create policy "read own alerts or admin" on alerts for select to authenticated
   using (
     exists (
-      select 1 from modules m
-      where m.id = alerts.module_id
+      select 1 from modules m 
+      where m.id = alerts.module_id 
       and (m.owner_id = auth.uid() or exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin'))
     )
   );
