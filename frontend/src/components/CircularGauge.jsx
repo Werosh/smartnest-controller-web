@@ -1,10 +1,10 @@
 /**
- * CircularGauge — SVG-based circular progress gauge
+ * CircularGauge - SVG-based circular progress gauge
  * Props:
- *   percent  — 0–100
- *   label    — caption below value
- *   size     — SVG dimension (default 140)
- *   stroke   — gauge stroke color (default accent)
+ *   percent  - 0–100
+ *   label    - caption below value
+ *   size     - SVG dimension (default 140)
+ *   stroke   - gauge stroke color (default accent)
  */
 export default function CircularGauge({
   percent = 0,

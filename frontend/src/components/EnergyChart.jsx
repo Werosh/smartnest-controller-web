@@ -84,7 +84,7 @@ export default function EnergyChart() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-text font-semibold text-base">Energy Usage Overview</h2>
-          <p className="text-muted text-xs mt-0.5">Live power consumption — last 10 minutes</p>
+          <p className="text-muted text-xs mt-0.5">Live power consumption - last 10 minutes</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-accent font-medium">
           <span className="live-dot" />

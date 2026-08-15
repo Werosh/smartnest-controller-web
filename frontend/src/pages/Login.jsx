@@ -3,14 +3,14 @@ import { supabase } from '../lib/supabaseClient';
 import { Zap, Eye, EyeOff, Home } from 'lucide-react';
 
 export default function Login() {
-  const [mode, setMode]         = useState('signin'); // 'signin' | 'signup'
-  const [name, setName]         = useState('');
-  const [email, setEmail]       = useState('');
+  const [mode, setMode] = useState('signin'); // 'signin' | 'signup'
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPw, setShowPw]     = useState(false);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
-  const [success, setSuccess]   = useState('');
+  const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -66,22 +66,20 @@ export default function Login() {
             <button
               id="signin-tab"
               onClick={() => { setMode('signin'); setError(''); setSuccess(''); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                mode === 'signin'
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${mode === 'signin'
                   ? 'bg-accent text-white shadow-glow-sm'
                   : 'text-muted hover:text-text'
-              }`}
+                }`}
             >
               Sign In
             </button>
             <button
               id="signup-tab"
               onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                mode === 'signup'
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${mode === 'signup'
                   ? 'bg-accent text-white shadow-glow-sm'
                   : 'text-muted hover:text-text'
-              }`}
+                }`}
             >
               Sign Up
             </button>
@@ -187,7 +185,7 @@ export default function Login() {
         </div>
 
         <p className="text-center text-xs text-muted mt-6">
-          SmartNest V1 — University IoT Project
+          SmartNest V1 - University IoT Project
         </p>
       </div>
     </div>

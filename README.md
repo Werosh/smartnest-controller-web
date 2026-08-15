@@ -1,6 +1,6 @@
-# SmartNest V1 — DIY Smart Home Dashboard
+# SmartNest V1 - DIY Smart Home Dashboard
 
-University IoT project — **web application only**. Hardware (ESP32 hub + ESP8266 modules) is a separate team's responsibility.
+University IoT project - **web application only**. Hardware (ESP32 hub + ESP8266 modules) is a separate team's responsibility.
 
 ## Architecture
 
@@ -34,7 +34,7 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 — sign up with any email/password.
+Open http://localhost:5173 - sign up with any email/password.
 
 ### 3. Promote yourself to admin
 
@@ -44,7 +44,7 @@ After signing up, grab your UUID from [Supabase Auth users](https://supabase.com
 UPDATE profiles SET role = 'admin' WHERE id = '<your-uuid>';
 ```
 
-Refresh the app — you'll see the **Admin** nav item appear.
+Refresh the app - you'll see the **Admin** nav item appear.
 
 ### 4. Start the bridge worker
 
@@ -65,12 +65,12 @@ node index.js
 You'll see:
 ```
 ╔══════════════════════════════════════════════╗
-║          SmartNest V1 — Bridge Worker        ║
+║          SmartNest V1 - Bridge Worker        ║
 ╚══════════════════════════════════════════════╝
   Mode : 🤖 SIMULATOR (mock hardware)
 ```
 
-Toggle a module in the dashboard — within ~4 seconds, live watts will appear with no page refresh.
+Toggle a module in the dashboard - within ~4 seconds, live watts will appear with no page refresh.
 
 ---
 
@@ -88,7 +88,7 @@ Toggle a module in the dashboard — within ~4 seconds, live watts will appear w
 | Variable | Description |
 |---|---|
 | `SUPABASE_URL` | Same as above |
-| `SUPABASE_SERVICE_ROLE_KEY` | **Secret** — from Supabase Dashboard → Project Settings → API |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Secret** - from Supabase Dashboard → Project Settings → API |
 | `MQTT_URL` | Leave blank for simulator mode. Set to `mqtts://<id>.hivemq.cloud:8883` for real hardware |
 | `MQTT_USERNAME` | HiveMQ username |
 | `MQTT_PASSWORD` | HiveMQ password |
@@ -164,17 +164,17 @@ Service: `smartnest` | Application ID: `a35f3ad0-0141-4502-b5e4-10f8eb78114b`
 ```
 smartnest/
   bridge-worker/
-    index.js          — main entry, MQTT ↔ Supabase bridge
-    mockDevice.js     — hardware simulator
-    .env              — local env (add your service role key!)
-    .env.example      — template
+    index.js          - main entry, MQTT ↔ Supabase bridge
+    mockDevice.js     - hardware simulator
+    .env              - local env (add your service role key!)
+    .env.example      - template
     package.json
   supabase/
-    schema.sql        — run once in Supabase SQL editor
+    schema.sql        - run once in Supabase SQL editor
   frontend/
     src/
-      main.jsx        — entry, Datadog RUM init
-      App.jsx         — routing + auth guards
+      main.jsx        - entry, Datadog RUM init
+      App.jsx         - routing + auth guards
       lib/
         supabaseClient.js
         AuthContext.jsx
@@ -197,7 +197,7 @@ smartnest/
     tailwind.config.js
     vite.config.js
     netlify.toml
-    .env             — VITE_SUPABASE_* credentials
+    .env             - VITE_SUPABASE_* credentials
     package.json
   README.md
 ```

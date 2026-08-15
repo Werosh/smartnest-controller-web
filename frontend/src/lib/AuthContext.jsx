@@ -5,13 +5,13 @@ const AuthContext = createContext(null);
 
 /**
  * AuthProvider wraps the app and exposes:
- *   user    — the Supabase Auth user object (or null)
- *   profile — the profiles row for the user (includes name, role)
- *   loading — true while the initial session is being resolved
- *   signOut — signs the user out
+ *   user    - the Supabase Auth user object (or null)
+ *   profile - the profiles row for the user (includes name, role)
+ *   loading - true while the initial session is being resolved
+ *   signOut - signs the user out
  */
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null);
+  const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 

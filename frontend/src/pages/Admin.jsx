@@ -10,7 +10,7 @@ import AddModuleModal from '../components/AddModuleModal';
 function UsersTable() {
   const { user: currentUser } = useAuth();
   const [profiles, setProfiles] = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [loading, setLoading] = useState(true);
 
   async function fetchProfiles() {
     setLoading(true);
@@ -107,7 +107,7 @@ function UsersTable() {
 
       <div className="mt-4 border-t border-border pt-4">
         <p className="text-muted text-xs">
-          <strong className="text-text">Note:</strong> To invite new users, share the app URL — they can sign up themselves.
+          <strong className="text-text">Note:</strong> To invite new users, share the app URL - they can sign up themselves.
           Newly signed-up users start as <code className="text-accent bg-accent/10 px-1 rounded">user</code> role.
           Promote them here after signup.
         </p>
@@ -120,9 +120,9 @@ function UsersTable() {
 // Module Management Table
 // ────────────────────────────────────────────────────────────
 function ModulesTable() {
-  const [modules, setModules]       = useState([]);
-  const [loading, setLoading]       = useState(true);
-  const [showModal, setShowModal]   = useState(false);
+  const [modules, setModules] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
 
   async function fetchModules() {
     setLoading(true);

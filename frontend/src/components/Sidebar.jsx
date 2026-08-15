@@ -6,12 +6,12 @@ import {
 import { useAuth } from '../lib/AuthContext';
 
 const NAV = [
-  { id: 'dashboard', label: 'Dashboard',  icon: LayoutDashboard, path: '/dashboard' },
-  { id: 'modules',   label: 'Modules',    icon: Cpu,              path: '/dashboard#modules' },
-  { id: 'energy',    label: 'Energy',     icon: BarChart2,        path: '/dashboard#energy' },
-  { id: 'schedules', label: 'Schedules',  icon: Calendar,         path: '/dashboard#schedules' },
-  { id: 'alerts',    label: 'Alerts',     icon: Bell,             path: '/dashboard#alerts' },
-  { id: 'history',   label: 'History',    icon: Clock,            path: '/dashboard#history' },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { id: 'modules', label: 'Modules', icon: Cpu, path: '/dashboard#modules' },
+  { id: 'energy', label: 'Energy', icon: BarChart2, path: '/dashboard#energy' },
+  { id: 'schedules', label: 'Schedules', icon: Calendar, path: '/dashboard#schedules' },
+  { id: 'alerts', label: 'Alerts', icon: Bell, path: '/dashboard#alerts' },
+  { id: 'history', label: 'History', icon: Clock, path: '/dashboard#history' },
 ];
 
 export default function Sidebar() {
@@ -84,7 +84,7 @@ export default function Sidebar() {
         </div>
         <div className="flex items-center gap-1.5 text-muted text-xs">
           <Wifi className="w-3 h-3" />
-          <span>Online — Supabase Realtime</span>
+          <span>Online - Supabase Realtime</span>
         </div>
       </div>
 

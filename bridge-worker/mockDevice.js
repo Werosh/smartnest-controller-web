@@ -1,5 +1,5 @@
 /**
- * mockDevice.js — Hardware Simulator for SmartNest V1
+ * mockDevice.js - Hardware Simulator for SmartNest V1
  *
  * When SIMULATE_HARDWARE=true (or MQTT_URL is unset), this module runs
  * a periodic tick that:

@@ -1,7 +1,7 @@
 {
   "name": "smartnest-bridge-worker",
   "version": "1.0.0",
-  "description": "SmartNest V1 — MQTT ↔ Supabase bridge worker + hardware simulator",
+  "description": "SmartNest V1 - MQTT ↔ Supabase bridge worker + hardware simulator",
   "main": "index.js",
   "type": "module",
   "scripts": {

@@ -1,5 +1,5 @@
 /**
- * SmartNest V1 — MQTT Bridge Worker
+ * SmartNest V1 - MQTT Bridge Worker
  *
  * Modes:
  *   SIMULATOR: MQTT_URL not set OR SIMULATE_HARDWARE=true
@@ -43,7 +43,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 console.log('');
 console.log('╔══════════════════════════════════════════════╗');
-console.log('║          SmartNest V1 — Bridge Worker        ║');
+console.log('║          SmartNest V1 - Bridge Worker        ║');
 console.log('╚══════════════════════════════════════════════╝');
 console.log(`  Supabase URL : ${SUPABASE_URL}`);
 console.log(`  Mode         : ${useSimulator ? '🤖 SIMULATOR (mock hardware)' : '📡 REAL MQTT'}`);
@@ -55,7 +55,7 @@ console.log('');
 
 // ── SIMULATOR MODE ────────────────────────────────────────────
 if (useSimulator) {
-  console.log('[BRIDGE] Starting in SIMULATOR mode — no MQTT connection needed.');
+  console.log('[BRIDGE] Starting in SIMULATOR mode - no MQTT connection needed.');
   console.log('[BRIDGE] Toggle modules in the dashboard; watts will update within ~4s.');
   await startSimulator(supabase, spikeThreshold);
 }

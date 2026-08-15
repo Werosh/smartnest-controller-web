@@ -55,16 +55,16 @@ export default function Dashboard() {
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
 
-  const [modules, setModules]         = useState([]);
-  const [todayKwh, setTodayKwh]       = useState(0);
-  const [monthKwh, setMonthKwh]       = useState(0);
+  const [modules, setModules] = useState([]);
+  const [todayKwh, setTodayKwh] = useState(0);
+  const [monthKwh, setMonthKwh] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
   const [loadingModules, setLoadingModules] = useState(true);
 
   // ── Derived stats ─────────────────────────────────────────
-  const currentW   = modules.filter(m => m.desired_state).reduce((s, m) => s + m.watts, 0);
-  const estBill    = (monthKwh * RATE_PER_KWH).toFixed(2);
-  const savedPct   = 18; // placeholder — would compare last month in production
+  const currentW = modules.filter(m => m.desired_state).reduce((s, m) => s + m.watts, 0);
+  const estBill = (monthKwh * RATE_PER_KWH).toFixed(2);
+  const savedPct = 18; // placeholder - would compare last month in production
   const moneySaved = (monthKwh * RATE_PER_KWH * (savedPct / 100)).toFixed(2);
 
   // ── Fetch modules + subscribe Realtime ───────────────────

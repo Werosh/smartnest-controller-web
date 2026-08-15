@@ -70,7 +70,7 @@ export default function AlertsPanel() {
         ) : alerts.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-20 text-muted gap-2">
             <Zap className="w-6 h-6 opacity-40" />
-            <p className="text-sm">No alerts — all systems normal</p>
+            <p className="text-sm">No alerts - all systems normal</p>
           </div>
         ) : (
           alerts.map(alert => (

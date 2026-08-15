@@ -1,5 +1,5 @@
 -- ============================================================
--- SmartNest V1 — Supabase Schema
+-- SmartNest V1 - Supabase Schema
 -- Run this in the Supabase SQL editor on a fresh project.
 -- ============================================================
 

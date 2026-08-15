@@ -28,7 +28,7 @@ export default function QuickActions({ modules }) {
   function downloadReport() {
     if (!modules) return;
     const lines = [
-      'SmartNest V1 — Energy Report',
+      'SmartNest V1 - Energy Report',
       `Generated: ${new Date().toLocaleString()}`,
       '',
       'Module,Type,State,Watts',
@@ -36,7 +36,7 @@ export default function QuickActions({ modules }) {
         `${m.name},${m.type},${m.desired_state ? 'ON' : 'OFF'},${m.watts}`
       ),
       '',
-      `Total Active Power: ${modules.filter(m=>m.desired_state).reduce((s,m)=>s+m.watts,0).toFixed(1)} W`,
+      `Total Active Power: ${modules.filter(m => m.desired_state).reduce((s, m) => s + m.watts, 0).toFixed(1)} W`,
     ];
     const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);

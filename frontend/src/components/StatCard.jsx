@@ -1,16 +1,16 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 /**
- * StatCard — reusable metric card
+ * StatCard - reusable metric card
  * Props:
- *   icon     — lucide-react icon component
- *   label    — string label
- *   value    — formatted string value
- *   unit     — optional unit suffix
- *   trend    — 'up' | 'down' | 'neutral'
- *   trendVal — e.g. "+12%" or "-3%"
- *   color    — tailwind bg class for icon background (default: bg-accent/10)
- *   iconColor— tailwind text class for icon (default: text-accent)
+ *   icon     - lucide-react icon component
+ *   label    - string label
+ *   value    - formatted string value
+ *   unit     - optional unit suffix
+ *   trend    - 'up' | 'down' | 'neutral'
+ *   trendVal - e.g. "+12%" or "-3%"
+ *   color    - tailwind bg class for icon background (default: bg-accent/10)
+ *   iconColor- tailwind text class for icon (default: text-accent)
  */
 export default function StatCard({
   icon: Icon,
@@ -24,9 +24,9 @@ export default function StatCard({
 }) {
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
   const trendColor =
-    trend === 'up'   ? 'text-accent' :
-    trend === 'down' ? 'text-red-400' :
-    'text-muted';
+    trend === 'up' ? 'text-accent' :
+      trend === 'down' ? 'text-red-400' :
+        'text-muted';
 
   return (
     <div className="stat-card group">
