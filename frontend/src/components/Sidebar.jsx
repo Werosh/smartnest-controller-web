@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Zap, LayoutDashboard, Cpu, BarChart2, Calendar,
   Bell, Clock, Settings, LogOut, ShieldCheck, Wifi
 } from 'lucide-react';
 import { useAuth } from '../lib/AuthContext';
+import SettingsModal from './SettingsModal';
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -19,6 +21,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const isAdmin = profile?.role === 'admin';
+  const [showSettings, setShowSettings] = useState(false);
 
   function isActive(path) {
     if (path === '/dashboard' && location.pathname === '/dashboard' && !location.hash) return true;
@@ -70,7 +73,11 @@ export default function Sidebar() {
 
         <div className="border-t border-border my-2" />
 
-        <button id="nav-settings" className="nav-item w-full">
+        <button 
+          id="nav-settings" 
+          onClick={() => setShowSettings(true)}
+          className="nav-item w-full"
+        >
           <Settings className="w-4 h-4 flex-shrink-0" />
           Settings
         </button>
@@ -113,6 +120,10 @@ export default function Sidebar() {
           </button>
         </div>
       </div>
+
+      {showSettings && (
+        <SettingsModal onClose={() => setShowSettings(false)} />
+      )}
     </aside>
   );
 }
