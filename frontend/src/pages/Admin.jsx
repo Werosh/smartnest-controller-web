@@ -121,17 +121,22 @@ function UsersTable() {
 // ────────────────────────────────────────────────────────────
 function ModulesTable() {
   const [modules, setModules] = useState([]);
+  const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
-  async function fetchModules() {
+  async function fetchModulesAndProfiles() {
     setLoading(true);
-    const { data } = await supabase.from('modules').select('*').order('name');
-    if (data) setModules(data);
+    const [modulesRes, profilesRes] = await Promise.all([
+      supabase.from('modules').select('*, profiles(name)').order('name'),
+      supabase.from('profiles').select('*').order('name')
+    ]);
+    if (modulesRes.data) setModules(modulesRes.data);
+    if (profilesRes.data) setProfiles(profilesRes.data);
     setLoading(false);
   }
 
-  useEffect(() => { fetchModules(); }, []);
+  useEffect(() => { fetchModulesAndProfiles(); }, []);
 
   async function deleteModule(id) {
     if (!window.confirm(`Delete module "${id}"? All readings and alerts for this module will also be removed.`)) return;
@@ -148,7 +153,7 @@ function ModulesTable() {
           <span className="badge badge-muted">{modules.length} modules</span>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={fetchModules} className="btn-ghost text-xs flex items-center gap-1.5">
+          <button onClick={fetchModulesAndProfiles} className="btn-ghost text-xs flex items-center gap-1.5">
             <RefreshCw className="w-3.5 h-3.5" />
             Refresh
           </button>
@@ -176,6 +181,7 @@ function ModulesTable() {
               <tr className="text-left text-muted text-xs uppercase tracking-wide border-b border-border">
                 <th className="pb-3 font-medium">Module</th>
                 <th className="pb-3 font-medium">Type</th>
+                <th className="pb-3 font-medium">Owner</th>
                 <th className="pb-3 font-medium">State</th>
                 <th className="pb-3 font-medium">Power</th>
                 <th className="pb-3 font-medium text-right">Actions</th>
@@ -190,6 +196,9 @@ function ModulesTable() {
                   </td>
                   <td className="py-3.5 pr-4">
                     <span className="badge badge-muted capitalize">{m.type}</span>
+                  </td>
+                  <td className="py-3.5 pr-4 text-text font-medium text-xs">
+                    {m.profiles?.name || 'Unknown'}
                   </td>
                   <td className="py-3.5 pr-4">
                     <span className={`badge ${m.state ? 'badge-green' : 'badge-muted'}`}>
@@ -225,7 +234,8 @@ function ModulesTable() {
       {showModal && (
         <AddModuleModal
           onClose={() => setShowModal(false)}
-          onAdded={fetchModules}
+          onAdded={fetchModulesAndProfiles}
+          profiles={profiles}
         />
       )}
     </div>

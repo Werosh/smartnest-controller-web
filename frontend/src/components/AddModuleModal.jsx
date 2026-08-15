@@ -8,10 +8,11 @@ const TYPES = [
   { value: 'outlet', label: 'Smart Outlet',   Icon: Plug },
 ];
 
-export default function AddModuleModal({ onClose, onAdded }) {
+export default function AddModuleModal({ onClose, onAdded, profiles = [] }) {
   const [id,   setId]   = useState('');
   const [name, setName] = useState('');
   const [type, setType] = useState('outlet');
+  const [ownerId, setOwnerId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
 
@@ -26,11 +27,15 @@ export default function AddModuleModal({ onClose, onAdded }) {
       setError('Module ID must be lowercase letters, numbers, and hyphens only.');
       return;
     }
+    if (!ownerId) {
+      setError('You must assign an owner to this module.');
+      return;
+    }
     setLoading(true);
     try {
       const { error: dbErr } = await supabase
         .from('modules')
-        .insert({ id: id.trim(), name: name.trim(), type });
+        .insert({ id: id.trim(), name: name.trim(), type, owner_id: ownerId });
       if (dbErr) throw dbErr;
       onAdded?.();
       onClose();
@@ -79,6 +84,23 @@ export default function AddModuleModal({ onClose, onAdded }) {
               placeholder="e.g. Bedroom Light"
               className="input"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-muted mb-1.5">
+              Owner <span className="text-red-400">*</span>
+            </label>
+            <select
+              id="module-owner-input"
+              value={ownerId}
+              onChange={e => setOwnerId(e.target.value)}
+              className="input"
+            >
+              <option value="" disabled>Select a user...</option>
+              {profiles.map(p => (
+                <option key={p.id} value={p.id}>{p.name} ({p.role})</option>
+              ))}
+            </select>
           </div>
 
           <div>
