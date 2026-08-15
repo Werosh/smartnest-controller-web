@@ -9,7 +9,7 @@ const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { id: 'modules', label: 'Modules', icon: Cpu, path: '/modules' },
   { id: 'energy', label: 'Energy', icon: BarChart2, path: '/energy' },
-  { id: 'schedules', label: 'Schedules', icon: Calendar, path: '/dashboard#schedules' },
+  { id: 'schedules', label: 'Schedules', icon: Calendar, path: '/schedules' },
   { id: 'alerts', label: 'Alerts', icon: Bell, path: '/dashboard#alerts' },
   { id: 'history', label: 'History', icon: Clock, path: '/dashboard#history' },
 ];
