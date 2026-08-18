@@ -26,10 +26,11 @@ function jitter(base) {
  * Start the hardware simulator.
  * @param {import('@supabase/supabase-js').SupabaseClient} supabase
  * @param {number} spikeThreshold - watts above which an alert is inserted
+ * @param {number} mainsVoltage - voltage for converting Amps to Watts
  */
-export async function startSimulator(supabase, spikeThreshold = 1200) {
+export async function startSimulator(supabase, spikeThreshold = 1200, mainsVoltage = 230) {
   console.log('[SIMULATOR] Mock hardware simulator starting...');
-  console.log(`[SIMULATOR] Tick interval: ${TICK_MS}ms | Spike threshold: ${spikeThreshold}W`);
+  console.log(`[SIMULATOR] Tick interval: ${TICK_MS}ms | Spike threshold: ${spikeThreshold}W | Voltage: ${mainsVoltage}V`);
 
   async function tick() {
     try {
@@ -76,9 +77,12 @@ export async function startSimulator(supabase, spikeThreshold = 1200) {
       for (const m of activeModules) {
         const baseW = BASE_WATTS[m.type] ?? 40;
         const isSpike = Math.random() < 0.03; // 3% chance
-        const watts = isSpike
-          ? jitter(baseW * (3 + Math.random() * 2)) // 3–5× spike
-          : jitter(baseW);
+        const amps = isSpike
+          ? jitter((baseW * (3 + Math.random() * 2)) / mainsVoltage) // 3–5× spike in Amps
+          : jitter(baseW / mainsVoltage);
+
+        // Convert Amps to Watts to match what index.js does for real hardware
+        const watts = Math.round(amps * mainsVoltage);
 
         const roundedWatts = parseFloat(watts.toFixed(1));
 

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../lib/AuthContext';
 import ModuleCard from '../components/ModuleCard';
 import AddModuleModal from '../components/AddModuleModal';
+import ConfirmModal from '../components/ConfirmModal';
 import { Cpu, Plus } from 'lucide-react';
 
 export default function Modules() {
@@ -12,9 +13,10 @@ export default function Modules() {
   const [modules, setModules] = useState([]);
   const [loadingModules, setLoadingModules] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   async function fetchModules() {
-    const { data } = await supabase.from('modules').select('*').order('name');
+    const { data } = await supabase.from('modules').select('*, owner:profiles(name)').order('name');
     if (data) setModules(data);
     setLoadingModules(false);
   }
@@ -29,7 +31,7 @@ export default function Modules() {
         { event: '*', schema: 'public', table: 'modules' },
         payload => {
           if (payload.eventType === 'INSERT') {
-            setModules(prev => [...prev, payload.new].sort((a, b) => a.name.localeCompare(b.name)));
+            fetchModules();
           } else if (payload.eventType === 'UPDATE') {
             setModules(prev =>
               prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m)
@@ -44,9 +46,15 @@ export default function Modules() {
     return () => supabase.removeChannel(channel);
   }, []);
 
-  async function handleDelete(id) {
-    if (!window.confirm('Delete this module? This cannot be undone.')) return;
+  async function handleDeleteConfirm() {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
     await supabase.from('modules').delete().eq('id', id);
+  }
+
+  function handleDelete(id) {
+    setConfirmDeleteId(id);
   }
 
   return (
@@ -87,6 +95,7 @@ export default function Modules() {
               key={m.id}
               module={m}
               isAdmin={isAdmin}
+              currentUserId={profile?.id}
               onDelete={handleDelete}
             />
           ))}
@@ -97,6 +106,16 @@ export default function Modules() {
         <AddModuleModal
           onClose={() => setShowAddModal(false)}
           onAdded={fetchModules}
+        />
+      )}
+
+      {confirmDeleteId && (
+        <ConfirmModal
+          title="Delete Module"
+          message="Are you sure you want to delete this module? This action cannot be undone."
+          confirmText="Delete"
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setConfirmDeleteId(null)}
         />
       )}
     </div>

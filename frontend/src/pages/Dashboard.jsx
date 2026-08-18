@@ -9,6 +9,7 @@ import SchedulesPanel from '../components/SchedulesPanel';
 import QuickActions from '../components/QuickActions';
 import CircularGauge from '../components/CircularGauge';
 import AddModuleModal from '../components/AddModuleModal';
+import ConfirmModal from '../components/ConfirmModal';
 import {
   Zap, Activity, DollarSign, Leaf, TrendingDown,
   Plus, Cpu
@@ -60,6 +61,7 @@ export default function Dashboard() {
   const [monthKwh, setMonthKwh] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
   const [loadingModules, setLoadingModules] = useState(true);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   // ── Derived stats ─────────────────────────────────────────
   const currentW = modules.filter(m => m.desired_state).reduce((s, m) => s + m.watts, 0);
@@ -69,7 +71,7 @@ export default function Dashboard() {
 
   // ── Fetch modules + subscribe Realtime ───────────────────
   async function fetchModules() {
-    const { data } = await supabase.from('modules').select('*').order('name');
+    const { data } = await supabase.from('modules').select('*, owner:profiles(name)').order('name');
     if (data) setModules(data);
     setLoadingModules(false);
   }
@@ -86,7 +88,7 @@ export default function Dashboard() {
         { event: '*', schema: 'public', table: 'modules' },
         payload => {
           if (payload.eventType === 'INSERT') {
-            setModules(prev => [...prev, payload.new].sort((a, b) => a.name.localeCompare(b.name)));
+            fetchModules();
           } else if (payload.eventType === 'UPDATE') {
             setModules(prev =>
               prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m)
@@ -117,9 +119,15 @@ export default function Dashboard() {
     };
   }, []);
 
-  async function handleDelete(id) {
-    if (!window.confirm('Delete this module? This cannot be undone.')) return;
+  async function handleDeleteConfirm() {
+    if (!confirmDeleteId) return;
+    const id = confirmDeleteId;
+    setConfirmDeleteId(null);
     await supabase.from('modules').delete().eq('id', id);
+  }
+
+  function handleDelete(id) {
+    setConfirmDeleteId(id);
   }
 
   return (
@@ -219,6 +227,7 @@ export default function Dashboard() {
                   key={m.id}
                   module={m}
                   isAdmin={isAdmin}
+                  currentUserId={profile?.id}
                   onDelete={handleDelete}
                 />
               ))}
@@ -261,6 +270,16 @@ export default function Dashboard() {
         <AddModuleModal
           onClose={() => setShowAddModal(false)}
           onAdded={fetchModules}
+        />
+      )}
+
+      {confirmDeleteId && (
+        <ConfirmModal
+          title="Delete Module"
+          message="Are you sure you want to delete this module? This action cannot be undone."
+          confirmText="Delete"
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setConfirmDeleteId(null)}
         />
       )}
     </div>

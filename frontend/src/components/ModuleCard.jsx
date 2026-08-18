@@ -1,6 +1,7 @@
 import { useState, useEffect as import_react_useEffect } from 'react';
 import { Lightbulb, Fan, Plug, Timer, MoreVertical, Trash2, Clock } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import AlertModal from './AlertModal';
 
 const TYPE_ICONS = {
   bulb:   Lightbulb,
@@ -14,14 +15,15 @@ const TYPE_COLORS = {
   outlet: { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20' },
 };
 
-function Toggle({ checked, onChange, id }) {
+function Toggle({ checked, onChange, id, disabled }) {
   return (
     <button
       id={id}
       role="switch"
       aria-checked={checked}
-      onClick={onChange}
-      className={`toggle ${checked ? 'bg-accent shadow-glow-sm' : 'bg-border'}`}
+      onClick={disabled ? undefined : onChange}
+      disabled={disabled}
+      className={`toggle ${checked ? (disabled ? 'bg-accent/50' : 'bg-accent shadow-glow-sm') : 'bg-border'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       <span
         className={`toggle-thumb ${checked ? 'translate-x-5' : 'translate-x-1'}`}
@@ -30,15 +32,18 @@ function Toggle({ checked, onChange, id }) {
   );
 }
 
-export default function ModuleCard({ module, isAdmin, onDelete }) {
+export default function ModuleCard({ module, isAdmin, currentUserId, onDelete }) {
   const [toggling, setToggling]     = useState(false);
   const [showTimer, setShowTimer]   = useState(false);
   const [timerMins, setTimerMins]   = useState('');
   const [menuOpen, setMenuOpen]     = useState(false);
+  const [errorMsg, setErrorMsg]     = useState(null);
 
   const Icon = TYPE_ICONS[module.type] ?? Plug;
   const colors = TYPE_COLORS[module.type] ?? TYPE_COLORS.outlet;
   
+  const isOwner = module.owner_id === currentUserId;
+
   // Use local state for optimistic UI updates
   const [isOn, setIsOn] = useState(module.desired_state);
 
@@ -48,7 +53,7 @@ export default function ModuleCard({ module, isAdmin, onDelete }) {
   }, [module.desired_state]);
 
   async function handleToggle() {
-    if (toggling) return;
+    if (toggling || !isOwner) return;
     
     // Optimistic update
     const previousState = isOn;
@@ -65,7 +70,7 @@ export default function ModuleCard({ module, isAdmin, onDelete }) {
         // Revert on error
         setIsOn(previousState);
         console.error("Failed to toggle module:", error);
-        alert("Failed to toggle module: " + error.message);
+        setErrorMsg("Failed to toggle module: " + error.message);
       }
     } catch (err) {
       setIsOn(previousState);
@@ -75,6 +80,7 @@ export default function ModuleCard({ module, isAdmin, onDelete }) {
   }
 
   async function setTimer() {
+    if (!isOwner) return;
     const mins = parseInt(timerMins, 10);
     if (isNaN(mins) || mins <= 0) return;
     const fireAt = new Date(Date.now() + mins * 60 * 1000).toISOString();
@@ -87,6 +93,7 @@ export default function ModuleCard({ module, isAdmin, onDelete }) {
   }
 
   async function clearTimer() {
+    if (!isOwner) return;
     await supabase
       .from('modules')
       .update({ timer_at: null })
@@ -103,7 +110,7 @@ export default function ModuleCard({ module, isAdmin, onDelete }) {
   }
 
   return (
-    <div className={`card p-5 flex flex-col gap-4 transition-all duration-300 hover:border-accent/20 animate-slide-up ${isOn ? 'border-accent/15' : ''}`}>
+    <div className={`card p-5 flex flex-col gap-4 transition-all duration-300 hover:border-accent/20 animate-slide-up ${isOn ? 'border-accent/15' : ''} ${!isOwner ? 'opacity-90' : ''}`}>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -112,7 +119,14 @@ export default function ModuleCard({ module, isAdmin, onDelete }) {
           </div>
           <div>
             <h3 className="text-text font-semibold text-sm leading-tight">{module.name}</h3>
-            <p className="text-muted text-xs capitalize mt-0.5">{module.type}</p>
+            <p className="text-muted text-xs capitalize mt-0.5">
+              {module.type}
+              {!isOwner && module.owner && (
+                <span className="ml-2 inline-block px-1.5 py-0.5 bg-bg border border-border rounded text-[10px]">
+                  Owned by {module.owner.name}
+                </span>
+              )}
+            </p>
           </div>
         </div>
 
@@ -142,6 +156,7 @@ export default function ModuleCard({ module, isAdmin, onDelete }) {
           <Toggle
             id={`toggle-${module.id}`}
             checked={isOn}
+            disabled={!isOwner}
             onChange={handleToggle}
           />
         </div>
@@ -171,14 +186,16 @@ export default function ModuleCard({ module, isAdmin, onDelete }) {
               <Clock className="w-3.5 h-3.5" />
               <span>Turns {isOn ? 'OFF' : 'ON'} in {formatTimer(module.timer_at)}</span>
             </div>
-            <button
-              onClick={clearTimer}
-              className="text-xs text-muted hover:text-red-400 transition-colors"
-            >
-              Clear
-            </button>
+            {isOwner && (
+              <button
+                onClick={clearTimer}
+                className="text-xs text-muted hover:text-red-400 transition-colors"
+              >
+                Clear
+              </button>
+            )}
           </div>
-        ) : showTimer ? (
+        ) : showTimer && isOwner ? (
           <div className="flex items-center gap-2">
             <input
               type="number"
@@ -194,14 +211,23 @@ export default function ModuleCard({ module, isAdmin, onDelete }) {
         ) : (
           <button
             id={`timer-btn-${module.id}`}
-            onClick={() => setShowTimer(true)}
-            className="flex items-center gap-1.5 text-muted hover:text-text text-xs transition-colors"
+            onClick={() => isOwner && setShowTimer(true)}
+            disabled={!isOwner}
+            className={`flex items-center gap-1.5 text-xs transition-colors ${isOwner ? 'text-muted hover:text-text' : 'text-muted/50 cursor-not-allowed'}`}
           >
             <Timer className="w-3.5 h-3.5" />
             Set timer
           </button>
         )}
       </div>
+
+      {errorMsg && (
+        <AlertModal
+          title="Toggle Error"
+          message={errorMsg}
+          onClose={() => setErrorMsg(null)}
+        />
+      )}
     </div>
   );
 }

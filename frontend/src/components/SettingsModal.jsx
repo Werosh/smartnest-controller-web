@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, User, ShieldCheck, Settings2, Sliders, Bell } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../lib/AuthContext';
+import AlertModal from './AlertModal';
 
 export default function SettingsModal({ onClose }) {
   const { profile } = useAuth();
@@ -9,6 +10,7 @@ export default function SettingsModal({ onClose }) {
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
 
   // Mock preferences state for the UI
   const [currency, setCurrency] = useState('USD');
@@ -35,7 +37,7 @@ export default function SettingsModal({ onClose }) {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } else {
-      alert('Error updating profile: ' + error.message);
+      setErrorMsg('Error updating profile: ' + error.message);
     }
   }
 
@@ -211,6 +213,13 @@ export default function SettingsModal({ onClose }) {
             </div>
           )}
 
+          {errorMsg && (
+            <AlertModal
+              title="Error"
+              message={errorMsg}
+              onClose={() => setErrorMsg(null)}
+            />
+          )}
         </div>
       </div>
     </div>

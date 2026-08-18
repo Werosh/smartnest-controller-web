@@ -17,7 +17,7 @@ create table if not exists modules (
   name text not null,
   type text not null default 'outlet'
     check (type in ('bulb','fan','outlet')),
-  owner_id uuid not null references auth.users(id) on delete cascade,
+  owner_id uuid not null references profiles(id) on delete cascade,
   state boolean not null default false,
   desired_state boolean not null default false,
   watts numeric not null default 0,
@@ -26,7 +26,7 @@ create table if not exists modules (
 );
 
 -- Ensure the column exists if the table was already created before
-alter table modules add column if not exists owner_id uuid references auth.users(id) on delete cascade;
+alter table modules add column if not exists owner_id uuid references profiles(id) on delete cascade;
 
 -- ── Readings ─────────────────────────────────────────────────
 create table if not exists readings (
@@ -46,11 +46,21 @@ create table if not exists alerts (
   at timestamptz default now()
 );
 
+-- ── Hub Status ───────────────────────────────────────────────
+create table if not exists hub_status (
+  id text primary key default 'main',
+  status text not null default 'offline',
+  updated_at timestamptz default now()
+);
+
+insert into hub_status (id, status) values ('main', 'offline') on conflict do nothing;
+
 -- ── Row Level Security ───────────────────────────────────────
 alter table profiles  enable row level security;
 alter table modules   enable row level security;
 alter table readings  enable row level security;
 alter table alerts    enable row level security;
+alter table hub_status enable row level security;
 
 drop policy if exists "read own profile" on profiles;
 create policy "read own profile"  on profiles  for select to authenticated using (true);
@@ -64,12 +74,12 @@ create policy "select own or admin modules" on modules for select to authenticat
   );
 
 drop policy if exists "update own or admin modules" on modules;
--- UPDATE: owner can update their own; admin can update any
-create policy "update own or admin modules" on modules for update to authenticated
-  using (
-    owner_id = auth.uid()
-    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
-  );
+drop policy if exists "update own only" on modules;
+drop policy if exists "toggle modules" on modules;
+drop policy if exists "update strictly own" on modules;
+-- UPDATE: owner-only. No role check bypasses this. Full stop.
+create policy "update strictly own" on modules for update to authenticated
+  using (owner_id = auth.uid());
 
 drop policy if exists "insert own or admin modules" on modules;
 -- INSERT: owners can insert their own modules; admin can insert any
@@ -113,6 +123,9 @@ create policy "admin manage profiles" on profiles for update to authenticated
   using (
     exists (select 1 from profiles where id = auth.uid() and role = 'admin')
   );
+
+drop policy if exists "read hub_status" on hub_status;
+create policy "read hub_status" on hub_status for select to authenticated using (true);
 
 -- ── Auto-create profile on signup ────────────────────────────
 create or replace function public.handle_new_user()

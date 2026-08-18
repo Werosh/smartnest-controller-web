@@ -6,9 +6,11 @@
  *   REAL MQTT: MQTT_URL set AND SIMULATE_HARDWARE != 'true'
  *
  * MQTT contract (topics agreed with hardware team):
- *   smartnest/<module-id>/power  ← device, payload: watts as string e.g. "256"
- *   smartnest/<module-id>/state  ← device, payload: "ON" | "OFF"
- *   smartnest/<module-id>/cmd    → device, payload: "ON" | "OFF"
+ *   smartnest/<module-id>/current     ← device, payload: float string in Amps e.g. "0.42"
+ *   smartnest/<module-id>/relay/state ← device, payload: "1" | "0"
+ *   smartnest/<module-id>/relay/set   → device, payload: "1" | "0"
+ *   smartnest/<module-id>/alert       ← device, payload: text
+ *   smartnest/hub/status              ← hub, payload: "online" | "offline"
  */
 
 import 'dotenv/config';
@@ -23,6 +25,7 @@ const {
   MQTT_USERNAME,
   MQTT_PASSWORD,
   SIMULATE_HARDWARE,
+  MAINS_VOLTAGE = '230',
   SPIKE_THRESHOLD_WATTS = '1200',
 } = process.env;
 
@@ -33,6 +36,7 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || SUPABASE_SERVICE_ROLE_KEY ===
 }
 
 const spikeThreshold = parseInt(SPIKE_THRESHOLD_WATTS, 10);
+const mainsVoltage = parseInt(MAINS_VOLTAGE, 10);
 const useSimulator = !MQTT_URL || SIMULATE_HARDWARE === 'true';
 
 // ── Create Supabase client (service role bypasses RLS) ────────
@@ -56,8 +60,8 @@ console.log('');
 // ── SIMULATOR MODE ────────────────────────────────────────────
 if (useSimulator) {
   console.log('[BRIDGE] Starting in SIMULATOR mode - no MQTT connection needed.');
-  console.log('[BRIDGE] Toggle modules in the dashboard; watts will update within ~4s.');
-  await startSimulator(supabase, spikeThreshold);
+  console.log('[BRIDGE] Toggle modules in the dashboard; current will update within ~4s.');
+  await startSimulator(supabase, spikeThreshold, mainsVoltage);
 }
 
 // ── REAL MQTT MODE ────────────────────────────────────────────
@@ -77,13 +81,21 @@ else {
     console.log('[MQTT] Connected to broker.');
 
     // Subscribe to all device telemetry topics
-    client.subscribe('smartnest/+/power', (err) => {
-      if (err) console.error('[MQTT] Subscribe error (power):', err);
-      else console.log('[MQTT] Subscribed to smartnest/+/power');
+    client.subscribe('smartnest/+/current', (err) => {
+      if (err) console.error('[MQTT] Subscribe error (current):', err);
+      else console.log('[MQTT] Subscribed to smartnest/+/current');
     });
-    client.subscribe('smartnest/+/state', (err) => {
-      if (err) console.error('[MQTT] Subscribe error (state):', err);
-      else console.log('[MQTT] Subscribed to smartnest/+/state');
+    client.subscribe('smartnest/+/relay/state', (err) => {
+      if (err) console.error('[MQTT] Subscribe error (relay/state):', err);
+      else console.log('[MQTT] Subscribed to smartnest/+/relay/state');
+    });
+    client.subscribe('smartnest/+/alert', (err) => {
+      if (err) console.error('[MQTT] Subscribe error (alert):', err);
+      else console.log('[MQTT] Subscribed to smartnest/+/alert');
+    });
+    client.subscribe('smartnest/hub/status', (err) => {
+      if (err) console.error('[MQTT] Subscribe error (hub/status):', err);
+      else console.log('[MQTT] Subscribed to smartnest/hub/status');
     });
   });
 
@@ -97,19 +109,33 @@ else {
 
   // ── Handle incoming MQTT messages ─────────────────────────
   client.on('message', async (topic, payload) => {
-    // topic format: smartnest/<module-id>/power | smartnest/<module-id>/state
     const parts = topic.split('/');
-    if (parts.length !== 3 || parts[0] !== 'smartnest') return;
+    if (parts.length < 3 || parts[0] !== 'smartnest') return;
 
     const moduleId = parts[1];
-    const messageType = parts[2];
+    
+    // Check for hub status
+    if (moduleId === 'hub' && parts[2] === 'status') {
+      const status = payload.toString().trim();
+      await supabase
+        .from('hub_status')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', 'main');
+      console.log(`[MQTT] Hub status: ${status}`);
+      return;
+    }
+
+    // parts[2] onwards will be 'current', 'relay/state', 'alert' etc.
+    // However, it can be 3 or 4 parts e.g. relay/state
+    const messageType = parts.slice(2).join('/');
     const value = payload.toString().trim();
 
     const now = new Date().toISOString();
 
-    if (messageType === 'power') {
-      const watts = parseFloat(value);
-      if (isNaN(watts)) return;
+    if (messageType === 'current') {
+      const amps = parseFloat(value);
+      if (isNaN(amps)) return;
+      const watts = Math.round(amps * mainsVoltage);
 
       // Update module watts
       const { error } = await supabase
@@ -125,34 +151,34 @@ else {
       // Insert reading
       await supabase.from('readings').insert({ module_id: moduleId, watts, at: now });
 
-      // Check for spike
-      if (watts > spikeThreshold) {
-        const { data: mod } = await supabase
-          .from('modules')
-          .select('name')
-          .eq('id', moduleId)
-          .single();
-
-        await supabase.from('alerts').insert({
-          module_id: moduleId,
-          module_name: mod?.name ?? moduleId,
-          type: 'spike',
-          message: `High consumption: ${moduleId} reported ${watts}W (threshold: ${spikeThreshold}W)`,
-          at: now,
-        });
-        console.log(`[MQTT] ⚡ SPIKE alert: ${moduleId} → ${watts}W`);
-      }
-
-      console.log(`[MQTT] ${moduleId} power: ${watts}W`);
+      console.log(`[MQTT] ${moduleId} current: ${amps}A (${watts}W)`);
     }
 
-    else if (messageType === 'state') {
-      const state = value === 'ON';
+    else if (messageType === 'relay/state') {
+      const state = value === '1';
       await supabase
         .from('modules')
         .update({ state, updated_at: now })
         .eq('id', moduleId);
       console.log(`[MQTT] ${moduleId} state confirmed: ${value}`);
+    }
+    
+    else if (messageType === 'alert') {
+      const { data: mod } = await supabase
+        .from('modules')
+        .select('name')
+        .eq('id', moduleId)
+        .single();
+      
+      const alertMsg = `Device alert: ${value}`;
+      await supabase.from('alerts').insert({
+        module_id: moduleId,
+        module_name: mod?.name ?? moduleId,
+        type: 'device_alert',
+        message: alertMsg,
+        at: now,
+      });
+      console.log(`[MQTT] ⚡ ALERT from ${moduleId}: ${value}`);
     }
   });
 
@@ -166,8 +192,8 @@ else {
       { event: 'UPDATE', schema: 'public', table: 'modules' },
       (payload) => {
         const { id, desired_state } = payload.new;
-        const cmd = desired_state ? 'ON' : 'OFF';
-        const topic = `smartnest/${id}/cmd`;
+        const cmd = desired_state ? '1' : '0';
+        const topic = `smartnest/${id}/relay/set`;
 
         if (client.connected) {
           client.publish(topic, cmd, { qos: 1 }, (err) => {
@@ -199,8 +225,8 @@ else {
         .update({ desired_state: newDesired, timer_at: null, updated_at: now.toISOString() })
         .eq('id', m.id);
 
-      const topic = `smartnest/${m.id}/cmd`;
-      const cmd = newDesired ? 'ON' : 'OFF';
+      const topic = `smartnest/${m.id}/relay/set`;
+      const cmd = newDesired ? '1' : '0';
       if (client.connected) {
         client.publish(topic, cmd, { qos: 1 });
         console.log(`[TIMER] ${m.id}: timer fired → ${cmd}`);
