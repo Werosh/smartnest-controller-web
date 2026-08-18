@@ -71,7 +71,8 @@ export default function Dashboard() {
 
   // ── Fetch modules + subscribe Realtime ───────────────────
   async function fetchModules() {
-    const { data } = await supabase.from('modules').select('*, owner:profiles(name)').order('name');
+    if (!profile?.id) return;
+    const { data } = await supabase.from('modules').select('*, owner:profiles(name)').eq('owner_id', profile.id).order('name');
     if (data) setModules(data);
     setLoadingModules(false);
   }
@@ -117,7 +118,7 @@ export default function Dashboard() {
       supabase.removeChannel(channel);
       supabase.removeChannel(readingsChannel);
     };
-  }, []);
+  }, [profile?.id]);
 
   async function handleDeleteConfirm() {
     if (!confirmDeleteId) return;

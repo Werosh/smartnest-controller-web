@@ -16,7 +16,8 @@ export default function Modules() {
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   async function fetchModules() {
-    const { data } = await supabase.from('modules').select('*, owner:profiles(name)').order('name');
+    if (!profile?.id) return;
+    const { data } = await supabase.from('modules').select('*, owner:profiles(name)').eq('owner_id', profile.id).order('name');
     if (data) setModules(data);
     setLoadingModules(false);
   }
@@ -44,7 +45,7 @@ export default function Modules() {
       .subscribe();
 
     return () => supabase.removeChannel(channel);
-  }, []);
+  }, [profile?.id]);
 
   async function handleDeleteConfirm() {
     if (!confirmDeleteId) return;

@@ -82,20 +82,16 @@ create policy "update strictly own" on modules for update to authenticated
   using (owner_id = auth.uid());
 
 drop policy if exists "insert own or admin modules" on modules;
--- INSERT: owners can insert their own modules; admin can insert any
-create policy "insert own or admin modules" on modules for insert to authenticated
-  with check (
-    owner_id = auth.uid()
-    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
-  );
+drop policy if exists "insert strictly own" on modules;
+-- INSERT: owners can insert their own modules. Admins cannot insert for others.
+create policy "insert strictly own" on modules for insert to authenticated
+  with check (owner_id = auth.uid());
 
 drop policy if exists "delete own or admin modules" on modules;
--- DELETE: owners can delete their own modules; admin can delete any
-create policy "delete own or admin modules" on modules for delete to authenticated
-  using (
-    owner_id = auth.uid()
-    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
-  );
+drop policy if exists "delete strictly own" on modules;
+-- DELETE: owners can delete their own modules. Admins cannot delete for others.
+create policy "delete strictly own" on modules for delete to authenticated
+  using (owner_id = auth.uid());
 
 drop policy if exists "read own readings or admin" on readings;
 -- READINGS & ALERTS: isolated by module ownership, admin sees all

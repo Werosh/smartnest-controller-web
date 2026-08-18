@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../lib/AuthContext';
 import { ShieldCheck, Users, Cpu, Trash2, RefreshCw, Plus, ChevronDown } from 'lucide-react';
-import AddModuleModal from '../components/AddModuleModal';
 
 // ────────────────────────────────────────────────────────────
 // User Management Table
@@ -11,8 +10,7 @@ function UsersTable() {
   const { user: currentUser } = useAuth();
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [showModal, setShowModal] = useState(false);
+  const [expandedUserId, setExpandedUserId] = useState(null);
 
   async function fetchProfiles() {
     setLoading(true);
@@ -42,13 +40,6 @@ function UsersTable() {
             <RefreshCw className="w-3.5 h-3.5" />
             Refresh
           </button>
-          <button
-            onClick={() => setShowModal(true)}
-            className="btn-primary text-xs py-2 px-3 flex items-center gap-1.5"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Assign Module
-          </button>
         </div>
       </div>
 
@@ -63,64 +54,90 @@ function UsersTable() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-muted text-xs uppercase tracking-wide border-b border-border">
+                <th className="pb-3 font-medium w-10"></th>
                 <th className="pb-3 font-medium">User</th>
                 <th className="pb-3 font-medium">Role</th>
-                <th className="pb-3 font-medium">Assigned Modules</th>
+                <th className="pb-3 font-medium">Modules</th>
                 <th className="pb-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {profiles.map(p => (
-                <tr key={p.id} className="hover:bg-bg/40 transition-colors">
-                  <td className="py-3.5 pr-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-xs font-bold">
-                          {(p.name ?? 'U').charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                      <div>
-                        <p className="text-text font-medium">{p.name}</p>
-                        <p className="text-muted text-xs font-mono truncate max-w-[200px]">
-                          {p.id.slice(0, 8)}...
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3.5 pr-4">
-                    <span className={`badge ${p.role === 'admin' ? 'badge-green' : 'badge-muted'}`}>
-                      {p.role}
-                    </span>
-                  </td>
-                  <td className="py-3.5 pr-4">
-                    {p.modules && p.modules.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {p.modules.map(m => (
-                          <span key={m.id} className="badge badge-muted text-[10px] capitalize flex items-center gap-1">
-                            <span className={`w-1.5 h-1.5 rounded-full ${m.state ? 'bg-green-400' : 'bg-gray-400'}`} />
-                            {m.name} ({m.type})
+                <React.Fragment key={p.id}>
+                  <tr 
+                    className="hover:bg-bg/40 transition-colors cursor-pointer group"
+                    onClick={() => setExpandedUserId(expandedUserId === p.id ? null : p.id)}
+                  >
+                    <td className="py-3.5 pr-4 text-center">
+                      <ChevronDown className={`w-4 h-4 text-muted inline-block transition-transform ${expandedUserId === p.id ? 'rotate-180' : ''}`} />
+                    </td>
+                    <td className="py-3.5 pr-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-white text-xs font-bold">
+                            {(p.name ?? 'U').charAt(0).toUpperCase()}
                           </span>
-                        ))}
+                        </div>
+                        <div>
+                          <p className="text-text font-medium">{p.name}</p>
+                          <p className="text-muted text-xs font-mono truncate max-w-[200px]">
+                            {p.id.slice(0, 8)}...
+                          </p>
+                        </div>
                       </div>
-                    ) : (
-                      <span className="text-muted text-xs italic">No modules</span>
-                    )}
-                  </td>
-                  <td className="py-3.5 text-right">
-                    {p.id !== currentUser?.id && (
-                      <button
-                        id={`toggle-role-${p.id}`}
-                        onClick={() => toggleRole(p)}
-                        className="text-xs text-muted hover:text-accent transition-colors px-2 py-1 rounded-lg hover:bg-accent/10"
-                      >
-                        Make {p.role === 'admin' ? 'User' : 'Admin'}
-                      </button>
-                    )}
-                    {p.id === currentUser?.id && (
-                      <span className="text-xs text-muted opacity-50">(you)</span>
-                    )}
-                  </td>
-                </tr>
+                    </td>
+                    <td className="py-3.5 pr-4">
+                      <span className={`badge ${p.role === 'admin' ? 'badge-green' : 'badge-muted'}`}>
+                        {p.role}
+                      </span>
+                    </td>
+                    <td className="py-3.5 pr-4">
+                      <span className="text-text font-medium text-sm">
+                        {p.modules ? p.modules.length : 0} <span className="text-muted font-normal">appliances</span>
+                      </span>
+                    </td>
+                    <td className="py-3.5 text-right" onClick={e => e.stopPropagation()}>
+                      {p.id !== currentUser?.id && (
+                        <button
+                          id={`toggle-role-${p.id}`}
+                          onClick={() => toggleRole(p)}
+                          className="text-xs text-muted hover:text-accent transition-colors px-2 py-1 rounded-lg hover:bg-accent/10"
+                        >
+                          Make {p.role === 'admin' ? 'User' : 'Admin'}
+                        </button>
+                      )}
+                      {p.id === currentUser?.id && (
+                        <span className="text-xs text-muted opacity-50">(you)</span>
+                      )}
+                    </td>
+                  </tr>
+                  {expandedUserId === p.id && (
+                    <tr className="bg-bg/30">
+                      <td colSpan={5} className="px-6 py-4 border-b border-border">
+                        <div className="pl-12">
+                          <h4 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">User's Modules (Read-Only Overview)</h4>
+                          {p.modules && p.modules.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {p.modules.map(m => (
+                                <div key={m.id} className="bg-panel border border-border rounded-xl p-3 flex items-center justify-between opacity-80">
+                                  <div>
+                                    <p className="text-sm font-medium text-text">{m.name}</p>
+                                    <p className="text-xs text-muted capitalize">{m.type} • ID: {m.id.slice(0,8)}</p>
+                                  </div>
+                                  <div className={`px-2 py-1 rounded text-xs font-semibold ${m.state ? 'bg-green-500/10 text-green-400' : 'bg-gray-500/10 text-gray-400'}`}>
+                                    {m.state ? 'ON' : 'OFF'}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted italic">This user has no modules registered.</p>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
@@ -131,17 +148,9 @@ function UsersTable() {
         <p className="text-muted text-xs">
           <strong className="text-text">Note:</strong> To invite new users, share the app URL - they can sign up themselves.
           Newly signed-up users start as <code className="text-accent bg-accent/10 px-1 rounded">user</code> role.
-          Promote them here after signup.
+          Promote them here after signup. Modules are strictly managed by users themselves.
         </p>
       </div>
-
-      {showModal && (
-        <AddModuleModal
-          onClose={() => setShowModal(false)}
-          onAdded={fetchProfiles}
-          profiles={profiles}
-        />
-      )}
     </div>
   );
 }
