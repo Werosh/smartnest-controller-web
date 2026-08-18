@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/AuthContext';
 import Login from './pages/Login';
+import UpdatePassword from './pages/UpdatePassword';
 import Dashboard from './pages/Dashboard';
 import Modules from './pages/Modules';
 import Energy from './pages/Energy';
@@ -76,6 +77,10 @@ export default function App() {
                 <Login />
               </PublicRoute>
             }
+          />
+          <Route
+            path="/update-password"
+            element={<UpdatePassword />}
           />
           <Route
             path="/dashboard"

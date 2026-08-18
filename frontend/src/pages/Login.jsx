@@ -23,7 +23,7 @@ export default function Login() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         // AuthProvider's onAuthStateChange will pick this up and redirect
-      } else {
+      } else if (mode === 'signup') {
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -32,6 +32,12 @@ export default function Login() {
         if (error) throw error;
         setSuccess('Account created! Check your email to confirm, then sign in.');
         setMode('signin');
+      } else if (mode === 'forgot') {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + '/update-password',
+        });
+        if (error) throw error;
+        setSuccess('Password reset link sent! Check your email.');
       }
     } catch (err) {
       setError(err.message);
@@ -61,29 +67,38 @@ export default function Login() {
 
         {/* Card */}
         <div className="card p-8">
-          {/* Tab toggle */}
-          <div className="flex bg-bg rounded-xl p-1 mb-6 gap-1">
-            <button
-              id="signin-tab"
-              onClick={() => { setMode('signin'); setError(''); setSuccess(''); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${mode === 'signin'
-                  ? 'bg-accent text-white shadow-glow-sm'
-                  : 'text-muted hover:text-text'
-                }`}
-            >
-              Sign In
-            </button>
-            <button
-              id="signup-tab"
-              onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${mode === 'signup'
-                  ? 'bg-accent text-white shadow-glow-sm'
-                  : 'text-muted hover:text-text'
-                }`}
-            >
-              Sign Up
-            </button>
-          </div>
+          {/* Tab toggle (hidden in forgot mode) */}
+          {mode !== 'forgot' && (
+            <div className="flex bg-bg rounded-xl p-1 mb-6 gap-1">
+              <button
+                id="signin-tab"
+                onClick={() => { setMode('signin'); setError(''); setSuccess(''); }}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${mode === 'signin'
+                    ? 'bg-accent text-white shadow-glow-sm'
+                    : 'text-muted hover:text-text'
+                  }`}
+              >
+                Sign In
+              </button>
+              <button
+                id="signup-tab"
+                onClick={() => { setMode('signup'); setError(''); setSuccess(''); }}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${mode === 'signup'
+                    ? 'bg-accent text-white shadow-glow-sm'
+                    : 'text-muted hover:text-text'
+                  }`}
+              >
+                Sign Up
+              </button>
+            </div>
+          )}
+
+          {mode === 'forgot' && (
+            <div className="mb-6">
+              <h2 className="text-lg font-bold text-text mb-1">Reset Password</h2>
+              <p className="text-sm text-muted">Enter your email and we will send you a reset link.</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'signup' && (
@@ -121,30 +136,43 @@ export default function Login() {
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-muted mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password-input"
-                  type={showPw ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                  className="input pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
-                >
-                  {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+            {mode !== 'forgot' && (
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-medium text-muted">
+                    Password
+                  </label>
+                  {mode === 'signin' && (
+                    <button
+                      type="button"
+                      onClick={() => { setMode('forgot'); setError(''); setSuccess(''); }}
+                      className="text-xs text-accent hover:text-accent2 transition-colors font-medium"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    id="password-input"
+                    type={showPw ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                    className="input pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(!showPw)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors"
+                  >
+                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {error && (
               <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
@@ -165,8 +193,8 @@ export default function Login() {
               className="btn-primary w-full py-3 text-sm mt-2"
             >
               {loading
-                ? (mode === 'signin' ? 'Signing in...' : 'Creating account...')
-                : (mode === 'signin' ? 'Sign In' : 'Create Account')
+                ? (mode === 'signin' ? 'Signing in...' : mode === 'signup' ? 'Creating account...' : 'Sending link...')
+                : (mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Send Reset Link')
               }
             </button>
           </form>
@@ -176,9 +204,21 @@ export default function Login() {
               First time?{' '}
               <button
                 onClick={() => setMode('signup')}
-                className="text-accent hover:text-accent2 transition-colors"
+                className="text-accent hover:text-accent2 transition-colors font-medium"
               >
                 Create an account
+              </button>
+            </p>
+          )}
+
+          {mode === 'forgot' && (
+            <p className="text-center text-xs text-muted mt-4">
+              Remembered your password?{' '}
+              <button
+                onClick={() => { setMode('signin'); setError(''); setSuccess(''); }}
+                className="text-accent hover:text-accent2 transition-colors font-medium"
+              >
+                Back to sign in
               </button>
             </p>
           )}

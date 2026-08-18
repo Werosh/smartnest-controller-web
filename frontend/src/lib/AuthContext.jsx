@@ -41,6 +41,11 @@ export function AuthProvider({ children }) {
         } else {
           setProfile(null);
         }
+
+        if (_event === 'PASSWORD_RECOVERY') {
+          // Force redirect to the update password page
+          window.location.replace('/update-password');
+        }
       }
     );
 

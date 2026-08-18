@@ -1,7 +1,16 @@
 import { AlertTriangle, LifeBuoy, LogOut } from 'lucide-react';
-import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../lib/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function Deactivated() {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <div className="card max-w-md w-full p-8 text-center space-y-6">
@@ -27,7 +36,7 @@ export default function Deactivated() {
           </button>
           
           <button 
-            onClick={() => supabase.auth.signOut()}
+            onClick={handleSignOut}
             className="btn-ghost w-full py-3 flex items-center justify-center gap-2 text-muted hover:text-red-400"
           >
             <LogOut className="w-4 h-4" />
