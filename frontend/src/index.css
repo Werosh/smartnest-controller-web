@@ -42,14 +42,14 @@
 
   /* Primary button */
   .btn-primary {
-    @apply bg-accent hover:bg-accent2 text-white font-semibold px-4 py-2 rounded-xl
+    @apply bg-accent hover:bg-accent2 text-white font-semibold px-4 py-3 sm:py-2 rounded-xl
            transition-all duration-200 hover:shadow-glow active:scale-95
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   /* Ghost button */
   .btn-ghost {
-    @apply bg-transparent hover:bg-border text-muted hover:text-text font-medium px-3 py-1.5 rounded-xl
+    @apply bg-transparent hover:bg-border text-muted hover:text-text font-medium px-3 py-2.5 sm:py-1.5 rounded-xl
            transition-all duration-200 active:scale-95;
   }
 
@@ -64,7 +64,7 @@
 
   /* Nav item */
   .nav-item {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-muted
+    @apply flex items-center gap-3 px-3 py-3 sm:py-2.5 rounded-xl text-muted
            hover:text-text hover:bg-border/60 transition-all duration-200 cursor-pointer font-medium text-sm;
   }
 

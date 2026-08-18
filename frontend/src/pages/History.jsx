@@ -76,41 +76,69 @@ export default function History() {
             <p>No telemetry data recorded yet.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-bg border-b border-border text-xs text-muted">
-                  <th className="p-4 font-medium">Timestamp</th>
-                  <th className="p-4 font-medium">Appliance</th>
-                  <th className="p-4 font-medium">Type</th>
-                  <th className="p-4 font-medium">Power (Watts)</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm text-text">
-                {history.map((row) => (
-                  <tr key={row.id} className="border-b border-border/50 hover:bg-bg/50 transition-colors">
-                    <td className="p-4 whitespace-nowrap text-muted text-xs">
-                      {new Date(row.at).toLocaleString()}
-                    </td>
-                    <td className="p-4 font-medium">
-                      {row.modules?.name || row.module_id}
-                    </td>
-                    <td className="p-4 capitalize text-muted">
-                      {row.modules?.type || 'unknown'}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-1.5">
-                        <Zap className={`w-3.5 h-3.5 ${row.watts > 1000 ? 'text-red-400' : 'text-yellow-400'}`} />
-                        <span className={row.watts > 1000 ? 'text-red-400 font-semibold' : ''}>
-                          {row.watts} W
-                        </span>
-                      </div>
-                    </td>
+          <>
+            {/* Mobile View: Stacked Cards */}
+            <div className="md:hidden divide-y divide-border border-t border-border">
+              {history.map((row) => (
+                <div key={row.id} className="p-4 flex flex-col gap-2 hover:bg-bg/50 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium text-text text-sm">
+                        {row.modules?.name || row.module_id}
+                      </p>
+                      <p className="text-xs text-muted capitalize mt-0.5">
+                        {row.modules?.type || 'unknown'}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-bg border border-border px-2 py-1 rounded-lg">
+                      <Zap className={`w-3.5 h-3.5 ${row.watts > 1000 ? 'text-red-400' : 'text-yellow-400'}`} />
+                      <span className={`text-xs ${row.watts > 1000 ? 'text-red-400 font-semibold' : 'text-text font-medium'}`}>
+                        {row.watts} W
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-muted font-mono">{new Date(row.at).toLocaleString()}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop View: Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-bg border-b border-border text-xs text-muted">
+                    <th className="p-4 font-medium">Timestamp</th>
+                    <th className="p-4 font-medium">Appliance</th>
+                    <th className="p-4 font-medium">Type</th>
+                    <th className="p-4 font-medium">Power (Watts)</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="text-sm text-text">
+                  {history.map((row) => (
+                    <tr key={row.id} className="border-b border-border/50 hover:bg-bg/50 transition-colors">
+                      <td className="p-4 whitespace-nowrap text-muted text-xs">
+                        {new Date(row.at).toLocaleString()}
+                      </td>
+                      <td className="p-4 font-medium">
+                        {row.modules?.name || row.module_id}
+                      </td>
+                      <td className="p-4 capitalize text-muted">
+                        {row.modules?.type || 'unknown'}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-1.5">
+                          <Zap className={`w-3.5 h-3.5 ${row.watts > 1000 ? 'text-red-400' : 'text-yellow-400'}`} />
+                          <span className={row.watts > 1000 ? 'text-red-400 font-semibold' : ''}>
+                            {row.watts} W
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

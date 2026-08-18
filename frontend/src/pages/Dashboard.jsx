@@ -172,7 +172,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* ── Stat Cards ─────────────────────────────────────── */}
-      <section id="stats" className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <section id="stats" className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <StatCard
           icon={Zap}
           label="Total Today"

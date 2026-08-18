@@ -51,17 +51,18 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-60 bg-panel border-r border-border flex flex-col flex-shrink-0 overflow-y-auto">
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
-        <div className="w-9 h-9 bg-accent/10 border border-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
-          <Zap className="w-5 h-5 text-accent" />
+    <>
+      <aside className="hidden md:flex flex-col w-60 bg-panel border-r border-border flex-shrink-0 overflow-y-auto">
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
+          <div className="w-9 h-9 bg-accent/10 border border-accent/20 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Zap className="w-5 h-5 text-accent" />
+          </div>
+          <div>
+            <p className="text-text font-bold text-sm leading-tight">SmartNest</p>
+            <p className="text-muted text-xs">V1 Dashboard</p>
+          </div>
         </div>
-        <div>
-          <p className="text-text font-bold text-sm leading-tight">SmartNest</p>
-          <p className="text-muted text-xs">V1 Dashboard</p>
-        </div>
-      </div>
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
@@ -147,5 +148,6 @@ export default function Sidebar() {
         <SettingsModal onClose={() => setShowSettings(false)} />
       )}
     </aside>
+    </>
   );
 }

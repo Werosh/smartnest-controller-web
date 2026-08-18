@@ -211,13 +211,15 @@ export default function TopBar() {
   }
 
   return (
-    <header className="h-16 border-b border-border bg-panel px-6 flex items-center justify-between flex-shrink-0">
+    <header className="h-16 border-b border-border bg-panel px-4 md:px-6 flex items-center justify-between flex-shrink-0">
       {/* Left: title + welcome */}
-      <div>
-        <h1 className="text-text font-bold text-base leading-tight">{title}</h1>
-        <p className="text-muted text-xs">
-          Welcome back, <span className="text-text font-medium">{profile?.name ?? 'Home Owner'}</span>
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="min-w-0">
+          <h1 className="text-text font-bold text-base leading-tight truncate">{title}</h1>
+          <p className="text-muted text-xs hidden sm:block truncate">
+            Welcome back, <span className="text-text font-medium">{profile?.name ?? 'Home Owner'}</span>
+          </p>
+        </div>
       </div>
 
       {/* Right: weather chip, clock, notification bell */}

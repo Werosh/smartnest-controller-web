@@ -60,15 +60,15 @@ export default function Modules() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
         <div className="flex items-center gap-2">
           <Cpu className="w-6 h-6 text-muted" />
-          <h2 className="text-xl font-semibold text-text">All Appliances</h2>
+          <h2 className="text-xl font-semibold text-text truncate">All Appliances</h2>
           <span className="badge badge-muted ml-2">{modules.length}</span>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="btn-primary text-sm py-2 px-4 flex items-center gap-2"
+          className="btn-primary w-full sm:w-auto text-sm py-2 px-4 flex items-center justify-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Add New Appliance
