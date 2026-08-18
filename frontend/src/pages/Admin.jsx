@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../lib/AuthContext';
-import { ShieldCheck, Users, Cpu, Trash2, RefreshCw, Plus, ChevronDown } from 'lucide-react';
+import { ShieldCheck, Users, Cpu, Trash2, RefreshCw, Plus, ChevronDown, Power } from 'lucide-react';
+import AddModuleModal from '../components/AddModuleModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 // ────────────────────────────────────────────────────────────
 // User Management Table
@@ -11,6 +13,8 @@ function UsersTable() {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedUserId, setExpandedUserId] = useState(null);
+  const [managingUserId, setManagingUserId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   async function fetchProfiles() {
     setLoading(true);
@@ -25,6 +29,32 @@ function UsersTable() {
     const newRole = profile.role === 'admin' ? 'user' : 'admin';
     await supabase.from('profiles').update({ role: newRole }).eq('id', profile.id);
     setProfiles(prev => prev.map(p => p.id === profile.id ? { ...p, role: newRole } : p));
+  }
+
+  async function toggleStatus(profile) {
+    const newStatus = profile.status === 'active' ? 'deactivated' : 'active';
+    await supabase.from('profiles').update({ status: newStatus }).eq('id', profile.id);
+    setProfiles(prev => prev.map(p => p.id === profile.id ? { ...p, status: newStatus } : p));
+  }
+
+  async function handleDeleteModuleConfirm() {
+    if (!confirmDeleteId) return;
+    await supabase.from('modules').delete().eq('id', confirmDeleteId);
+    setConfirmDeleteId(null);
+    fetchProfiles();
+  }
+
+  async function handleToggleModule(module) {
+    const newState = !module.desired_state;
+    // Optimistic update in UI
+    setProfiles(prev => prev.map(p => {
+      if (p.id !== module.owner_id) return p;
+      return {
+        ...p,
+        modules: p.modules.map(m => m.id === module.id ? { ...m, desired_state: newState, state: newState } : m)
+      };
+    }));
+    await supabase.from('modules').update({ desired_state: newState }).eq('id', module.id);
   }
 
   return (
@@ -57,6 +87,7 @@ function UsersTable() {
                 <th className="pb-3 font-medium w-10"></th>
                 <th className="pb-3 font-medium">User</th>
                 <th className="pb-3 font-medium">Role</th>
+                <th className="pb-3 font-medium">Status</th>
                 <th className="pb-3 font-medium">Modules</th>
                 <th className="pb-3 font-medium text-right">Actions</th>
               </tr>
@@ -92,19 +123,35 @@ function UsersTable() {
                       </span>
                     </td>
                     <td className="py-3.5 pr-4">
+                      <span className={`badge ${p.status === 'deactivated' ? 'bg-red-500/10 text-red-400' : 'bg-green-500/10 text-green-400'}`}>
+                        {p.status || 'active'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 pr-4">
                       <span className="text-text font-medium text-sm">
                         {p.modules ? p.modules.length : 0} <span className="text-muted font-normal">appliances</span>
                       </span>
                     </td>
-                    <td className="py-3.5 text-right" onClick={e => e.stopPropagation()}>
+                    <td className="py-3.5 text-right flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
                       {p.id !== currentUser?.id && (
-                        <button
-                          id={`toggle-role-${p.id}`}
-                          onClick={() => toggleRole(p)}
-                          className="text-xs text-muted hover:text-accent transition-colors px-2 py-1 rounded-lg hover:bg-accent/10"
-                        >
-                          Make {p.role === 'admin' ? 'User' : 'Admin'}
-                        </button>
+                        <>
+                          <button
+                            onClick={() => toggleRole(p)}
+                            className="text-xs text-muted hover:text-accent transition-colors px-2 py-1 rounded-lg hover:bg-accent/10"
+                          >
+                            Make {p.role === 'admin' ? 'User' : 'Admin'}
+                          </button>
+                          <button
+                            onClick={() => toggleStatus(p)}
+                            className={`text-xs transition-colors px-2 py-1 rounded-lg ${
+                              p.status === 'deactivated' 
+                                ? 'text-green-400 hover:bg-green-400/10' 
+                                : 'text-red-400 hover:bg-red-400/10'
+                            }`}
+                          >
+                            {p.status === 'deactivated' ? 'Reactivate' : 'Deactivate'}
+                          </button>
+                        </>
                       )}
                       {p.id === currentUser?.id && (
                         <span className="text-xs text-muted opacity-50">(you)</span>
@@ -113,20 +160,56 @@ function UsersTable() {
                   </tr>
                   {expandedUserId === p.id && (
                     <tr className="bg-bg/30">
-                      <td colSpan={5} className="px-6 py-4 border-b border-border">
+                      <td colSpan={6} className="px-6 py-4 border-b border-border">
                         <div className="pl-12">
-                          <h4 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">User's Modules (Read-Only Overview)</h4>
+                          <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-xs font-semibold text-muted uppercase tracking-wider">
+                              User's Modules {p.status === 'deactivated' ? '(Admin Management Mode)' : '(Read-Only Overview)'}
+                            </h4>
+                            {p.status === 'deactivated' && (
+                              <button
+                                onClick={() => setManagingUserId(p.id)}
+                                className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
+                              >
+                                <Plus className="w-3 h-3" />
+                                Add Module
+                              </button>
+                            )}
+                          </div>
+                          
                           {p.modules && p.modules.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                               {p.modules.map(m => (
-                                <div key={m.id} className="bg-panel border border-border rounded-xl p-3 flex items-center justify-between opacity-80">
+                                <div key={m.id} className={`bg-panel border border-border rounded-xl p-3 flex items-center justify-between ${p.status === 'active' ? 'opacity-80' : ''}`}>
                                   <div>
                                     <p className="text-sm font-medium text-text">{m.name}</p>
                                     <p className="text-xs text-muted capitalize">{m.type} • ID: {m.id.slice(0,8)}</p>
                                   </div>
-                                  <div className={`px-2 py-1 rounded text-xs font-semibold ${m.state ? 'bg-green-500/10 text-green-400' : 'bg-gray-500/10 text-gray-400'}`}>
-                                    {m.state ? 'ON' : 'OFF'}
-                                  </div>
+                                  
+                                  {p.status === 'deactivated' ? (
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        onClick={() => handleToggleModule(m)}
+                                        className={`p-2 rounded-lg transition-colors ${
+                                          m.desired_state 
+                                            ? 'bg-accent/20 text-accent hover:bg-accent/30' 
+                                            : 'bg-bg text-muted hover:text-text'
+                                        }`}
+                                      >
+                                        <Power className="w-4 h-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => setConfirmDeleteId(m.id)}
+                                        className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className={`px-2 py-1 rounded text-xs font-semibold ${m.state ? 'bg-green-500/10 text-green-400' : 'bg-gray-500/10 text-gray-400'}`}>
+                                      {m.state ? 'ON' : 'OFF'}
+                                    </div>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -147,10 +230,27 @@ function UsersTable() {
       <div className="mt-4 border-t border-border pt-4">
         <p className="text-muted text-xs">
           <strong className="text-text">Note:</strong> To invite new users, share the app URL - they can sign up themselves.
-          Newly signed-up users start as <code className="text-accent bg-accent/10 px-1 rounded">user</code> role.
-          Promote them here after signup. Modules are strictly managed by users themselves.
+          Active users strictly manage their own modules. Admins can manage a user's modules ONLY if their account is deactivated.
         </p>
       </div>
+
+      {managingUserId && (
+        <AddModuleModal
+          onClose={() => setManagingUserId(null)}
+          onAdded={fetchProfiles}
+          targetOwnerId={managingUserId}
+        />
+      )}
+
+      {confirmDeleteId && (
+        <ConfirmModal
+          title="Delete Module"
+          message="Are you sure you want to delete this user's module? This action cannot be undone."
+          confirmText="Delete"
+          onConfirm={handleDeleteModuleConfirm}
+          onCancel={() => setConfirmDeleteId(null)}
+        />
+      )}
     </div>
   );
 }

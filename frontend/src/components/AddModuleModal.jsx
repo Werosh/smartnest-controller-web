@@ -9,7 +9,7 @@ const TYPES = [
   { value: 'outlet', label: 'Smart Outlet',   Icon: Plug },
 ];
 
-export default function AddModuleModal({ onClose, onAdded }) {
+export default function AddModuleModal({ onClose, onAdded, targetOwnerId = null }) {
   const { profile: currentProfile } = useAuth();
 
   const [name, setName] = useState('');
@@ -28,11 +28,13 @@ export default function AddModuleModal({ onClose, onAdded }) {
     // Auto-generate a secure random ID
     const generatedId = 'mdl-' + Math.random().toString(16).slice(2, 10);
     
+    const finalOwnerId = targetOwnerId || currentProfile.id;
+
     setLoading(true);
     try {
       const { error: dbErr } = await supabase
         .from('modules')
-        .insert({ id: generatedId, name: name.trim(), type, owner_id: currentProfile.id });
+        .insert({ id: generatedId, name: name.trim(), type, owner_id: finalOwnerId });
       if (dbErr) throw dbErr;
       onAdded?.();
       onClose();

@@ -8,8 +8,13 @@ create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   name text not null default 'Home Owner',
   role text not null default 'user' check (role in ('admin','user')),
+  status text not null default 'active' check (status in ('active','deactivated')),
   created_at timestamptz default now()
 );
+
+-- Ensure the status column exists if the table was already created before
+alter table profiles add column if not exists status text not null default 'active' check (status in ('active','deactivated'));
+
 
 -- ── Modules (one row per physical ESP8266 module) ────────────
 create table if not exists modules (
@@ -66,32 +71,56 @@ drop policy if exists "read own profile" on profiles;
 create policy "read own profile"  on profiles  for select to authenticated using (true);
 
 drop policy if exists "select own or admin modules" on modules;
--- SELECT: owner sees their own modules; admin sees all
+-- SELECT: Active owner sees their own modules; admin sees all
 create policy "select own or admin modules" on modules for select to authenticated
   using (
-    owner_id = auth.uid()
-    or exists (select 1 from profiles where id = auth.uid() and role = 'admin')
+    (owner_id = auth.uid() and (select status from profiles where id = auth.uid()) = 'active')
+    or (select role from profiles where id = auth.uid()) = 'admin'
   );
 
 drop policy if exists "update own or admin modules" on modules;
 drop policy if exists "update own only" on modules;
 drop policy if exists "toggle modules" on modules;
 drop policy if exists "update strictly own" on modules;
--- UPDATE: owner-only. No role check bypasses this. Full stop.
+-- UPDATE: 
+-- 1. Active owner can update their own modules.
+-- 2. Admin can update a module ONLY IF the module's owner is deactivated.
 create policy "update strictly own" on modules for update to authenticated
-  using (owner_id = auth.uid());
+  using (
+    (owner_id = auth.uid() and (select status from profiles where id = auth.uid()) = 'active')
+    or (
+      (select role from profiles where id = auth.uid()) = 'admin' 
+      and (select status from profiles where id = owner_id) = 'deactivated'
+    )
+  );
 
 drop policy if exists "insert own or admin modules" on modules;
 drop policy if exists "insert strictly own" on modules;
--- INSERT: owners can insert their own modules. Admins cannot insert for others.
+-- INSERT: 
+-- 1. Active owner can insert their own modules.
+-- 2. Admin can insert a module ONLY IF assigning it to a deactivated owner.
 create policy "insert strictly own" on modules for insert to authenticated
-  with check (owner_id = auth.uid());
+  with check (
+    (owner_id = auth.uid() and (select status from profiles where id = auth.uid()) = 'active')
+    or (
+      (select role from profiles where id = auth.uid()) = 'admin' 
+      and (select status from profiles where id = owner_id) = 'deactivated'
+    )
+  );
 
 drop policy if exists "delete own or admin modules" on modules;
 drop policy if exists "delete strictly own" on modules;
--- DELETE: owners can delete their own modules. Admins cannot delete for others.
+-- DELETE: 
+-- 1. Active owner can delete their own modules.
+-- 2. Admin can delete a module ONLY IF the module's owner is deactivated.
 create policy "delete strictly own" on modules for delete to authenticated
-  using (owner_id = auth.uid());
+  using (
+    (owner_id = auth.uid() and (select status from profiles where id = auth.uid()) = 'active')
+    or (
+      (select role from profiles where id = auth.uid()) = 'admin' 
+      and (select status from profiles where id = owner_id) = 'deactivated'
+    )
+  );
 
 drop policy if exists "read own readings or admin" on readings;
 -- READINGS & ALERTS: isolated by module ownership, admin sees all
@@ -100,7 +129,10 @@ create policy "read own readings or admin" on readings for select to authenticat
     exists (
       select 1 from modules m 
       where m.id = readings.module_id 
-      and (m.owner_id = auth.uid() or exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin'))
+      and (
+        (m.owner_id = auth.uid() and (select status from profiles where id = auth.uid()) = 'active') 
+        or (select role from profiles where id = auth.uid()) = 'admin'
+      )
     )
   );
 
@@ -110,7 +142,10 @@ create policy "read own alerts or admin" on alerts for select to authenticated
     exists (
       select 1 from modules m 
       where m.id = alerts.module_id 
-      and (m.owner_id = auth.uid() or exists (select 1 from profiles p where p.id = auth.uid() and p.role = 'admin'))
+      and (
+        (m.owner_id = auth.uid() and (select status from profiles where id = auth.uid()) = 'active') 
+        or (select role from profiles where id = auth.uid()) = 'admin'
+      )
     )
   );
 
@@ -141,16 +176,3 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
--- ── Seed demo modules (Requires a valid owner_id to run now, commented out by default)
--- insert into modules (id, name, type, owner_id, state, desired_state, watts) values
---   ('living-room-light', 'Living Room Light', 'bulb',   '<uuid>', false, false, 0),
---   ('bedroom-fan',       'Bedroom Fan',       'fan',    '<uuid>', false, false, 0),
---   ('kitchen-outlet',    'Kitchen Outlet',    'outlet', '<uuid>', false, false, 0),
---   ('office-light',      'Office Light',      'bulb',   '<uuid>', false, false, 0),
---   ('bathroom-fan',      'Bathroom Fan',      'fan',    '<uuid>', false, false, 0)
--- on conflict (id) do nothing;
-
--- ============================================================
--- After your FIRST signup, promote yourself to admin:
---   update profiles set role = 'admin' where id = '<your-uuid>';
--- ============================================================

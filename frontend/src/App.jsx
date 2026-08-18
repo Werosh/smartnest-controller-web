@@ -8,6 +8,7 @@ import Schedules from './pages/Schedules';
 import Alerts from './pages/Alerts';
 import History from './pages/History';
 import Admin from './pages/Admin';
+import Deactivated from './pages/Deactivated';
 import Sidebar from './components/Sidebar';
 import TopBar from './components/TopBar';
 
@@ -28,9 +29,10 @@ function AppShell({ children }) {
 
 // ── Route guards ──────────────────────────────────────────────
 function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
+  if (profile?.status === 'deactivated') return <Navigate to="/deactivated" replace />;
   return children;
 }
 
@@ -38,6 +40,7 @@ function AdminRoute({ children }) {
   const { user, profile, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
+  if (profile?.status === 'deactivated') return <Navigate to="/deactivated" replace />;
   if (profile && profile.role !== 'admin') return <Navigate to="/dashboard" replace />;
   return children;
 }
@@ -142,6 +145,12 @@ export default function App() {
                   <Admin />
                 </AppShell>
               </AdminRoute>
+            }
+          />
+          <Route
+            path="/deactivated"
+            element={
+              <Deactivated />
             }
           />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
