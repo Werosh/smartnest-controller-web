@@ -49,7 +49,10 @@ export default function AddModuleModal({ onClose, onAdded, targetOwnerId = null 
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="card w-full max-w-md p-6 animate-slide-up">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-text font-semibold text-base">Register New Module</h2>
+          <div>
+            <h2 className="text-xl font-bold text-text mb-1">Add New Appliance</h2>
+            <p className="text-muted text-sm">Register a new smart home appliance.</p>
+          </div>
           <button onClick={onClose} className="btn-ghost p-1.5 rounded-lg">
             <X className="w-4 h-4" />
           </button>

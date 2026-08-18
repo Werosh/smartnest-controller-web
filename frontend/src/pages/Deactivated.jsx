@@ -12,7 +12,7 @@ export default function Deactivated() {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-text">Account Deactivated</h1>
           <p className="text-muted text-sm leading-relaxed">
-            Your account is currently deactivated. You do not have access to your dashboard or modules.
+            Your account is currently deactivated. You do not have access to your dashboard or appliances.
             Please contact our support team to reactivate your account.
           </p>
         </div>

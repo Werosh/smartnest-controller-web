@@ -55,7 +55,7 @@ export default function Schedules() {
         <div className="card p-6 border-dashed border-border/50 text-muted flex flex-col justify-center items-center text-center gap-2">
           <Calendar className="w-8 h-8 opacity-40 mb-2" />
           <p className="text-sm font-medium">Want to schedule a device?</p>
-          <p className="text-xs">Go to the Modules page and click "Set timer" on any device to add it here.</p>
+          <p className="text-xs">Go to the Appliances page and click "Set timer" on any device to add it here.</p>
         </div>
       </div>
     </div>

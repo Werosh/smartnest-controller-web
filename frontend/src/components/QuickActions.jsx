@@ -68,7 +68,7 @@ export default function QuickActions({ modules }) {
           }
           <div className="text-left">
             <p className="text-sm font-semibold">
-              {done ? 'All Modules Off!' : turningOff ? 'Turning Off...' : 'Turn Off All Modules'}
+              {done ? 'All Appliances Off!' : turningOff ? 'Turning Off...' : 'Turn Off All Appliances'}
             </p>
             <p className="text-xs opacity-70 mt-0.5">
               {(modules ?? []).filter(m => m.desired_state).length} currently on
@@ -95,7 +95,7 @@ export default function QuickActions({ modules }) {
           <CalendarPlus className="w-4 h-4" />
           <div className="text-left">
             <p className="text-sm font-medium">Add New Schedule</p>
-            <p className="text-xs opacity-70 mt-0.5">Set a timer on any module card</p>
+            <p className="text-xs opacity-70 mt-0.5">Set a timer on any appliance card</p>
           </div>
         </button>
       </div>

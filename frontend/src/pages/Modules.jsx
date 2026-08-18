@@ -63,7 +63,7 @@ export default function Modules() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Cpu className="w-6 h-6 text-muted" />
-          <h2 className="text-xl font-semibold text-text">All Modules</h2>
+          <h2 className="text-xl font-semibold text-text">All Appliances</h2>
           <span className="badge badge-muted ml-2">{modules.length}</span>
         </div>
         <button
@@ -71,7 +71,7 @@ export default function Modules() {
           className="btn-primary text-sm py-2 px-4 flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          Add New Module
+          Add New Appliance
         </button>
       </div>
 
@@ -84,9 +84,9 @@ export default function Modules() {
       ) : modules.length === 0 ? (
         <div className="card p-12 flex flex-col items-center justify-center text-muted gap-4">
           <Cpu className="w-12 h-12 opacity-30" />
-          <p className="text-base">No modules registered yet</p>
+          <p className="text-base">No appliances registered yet</p>
           <button onClick={() => setShowAddModal(true)} className="btn-primary text-sm py-2 px-6">
-            Register First Module
+            Register First Appliance
           </button>
         </div>
       ) : (
@@ -112,8 +112,8 @@ export default function Modules() {
 
       {confirmDeleteId && (
         <ConfirmModal
-          title="Delete Module"
-          message="Are you sure you want to delete this module? This action cannot be undone."
+          title="Delete Appliance"
+          message="Are you sure you want to delete this appliance? This action cannot be undone."
           confirmText="Delete"
           onConfirm={handleDeleteConfirm}
           onCancel={() => setConfirmDeleteId(null)}

@@ -81,7 +81,7 @@ export default function History() {
               <thead>
                 <tr className="bg-bg border-b border-border text-xs text-muted">
                   <th className="p-4 font-medium">Timestamp</th>
-                  <th className="p-4 font-medium">Module</th>
+                  <th className="p-4 font-medium">Appliance</th>
                   <th className="p-4 font-medium">Type</th>
                   <th className="p-4 font-medium">Power (Watts)</th>
                 </tr>

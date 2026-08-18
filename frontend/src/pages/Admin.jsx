@@ -88,7 +88,7 @@ function UsersTable() {
                 <th className="pb-3 font-medium">User</th>
                 <th className="pb-3 font-medium">Role</th>
                 <th className="pb-3 font-medium">Status</th>
-                <th className="pb-3 font-medium">Modules</th>
+                <th className="pb-3 font-medium">Appliances</th>
                 <th className="pb-3 font-medium text-right">Actions</th>
               </tr>
             </thead>
@@ -164,7 +164,7 @@ function UsersTable() {
                         <div className="pl-12">
                           <div className="flex items-center justify-between mb-4">
                             <h4 className="text-xs font-semibold text-muted uppercase tracking-wider">
-                              User's Modules {p.status === 'deactivated' ? '(Admin Management Mode)' : '(Read-Only Overview)'}
+                              User's Appliances {p.status === 'deactivated' ? '(Admin Management Mode)' : '(Read-Only Overview)'}
                             </h4>
                             {p.status === 'deactivated' && (
                               <button
@@ -172,7 +172,7 @@ function UsersTable() {
                                 className="btn-primary text-xs py-1.5 px-3 flex items-center gap-1.5"
                               >
                                 <Plus className="w-3 h-3" />
-                                Add Module
+                                Add Appliance
                               </button>
                             )}
                           </div>
@@ -214,7 +214,7 @@ function UsersTable() {
                               ))}
                             </div>
                           ) : (
-                            <p className="text-sm text-muted italic">This user has no modules registered.</p>
+                            <p className="text-sm text-muted italic">This user has no appliances registered.</p>
                           )}
                         </div>
                       </td>
@@ -230,7 +230,7 @@ function UsersTable() {
       <div className="mt-4 border-t border-border pt-4">
         <p className="text-muted text-xs">
           <strong className="text-text">Note:</strong> To invite new users, share the app URL - they can sign up themselves.
-          Active users strictly manage their own modules. Admins can manage a user's modules ONLY if their account is deactivated.
+          Active users strictly manage their own appliances. Admins can manage a user's appliances ONLY if their account is deactivated.
         </p>
       </div>
 
@@ -244,8 +244,8 @@ function UsersTable() {
 
       {confirmDeleteId && (
         <ConfirmModal
-          title="Delete Module"
-          message="Are you sure you want to delete this user's module? This action cannot be undone."
+          title="Delete Appliance"
+          message="Are you sure you want to delete this user's appliance? This action cannot be undone."
           confirmText="Delete"
           onConfirm={handleDeleteModuleConfirm}
           onCancel={() => setConfirmDeleteId(null)}

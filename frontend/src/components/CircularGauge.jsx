@@ -12,14 +12,19 @@ export default function CircularGauge({
   size = 140,
   stroke = '#22c55e',
 }) {
+  const isPositive = percent >= 0;
+  const absPercent = Math.abs(percent);
+  
   const radius = (size - 20) / 2;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (Math.min(Math.max(percent, 0), 100) / 100) * circumference;
+  const offset = circumference - (Math.min(Math.max(absPercent, 0), 100) / 100) * circumference;
   const center = size / 2;
+
+  const displayStroke = isPositive ? stroke : '#ef4444';
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <svg width={size} height={size} className="-rotate-90">
+      <svg width={size} height={size} className="-rotate-90 filter drop-shadow-lg">
         {/* Background track */}
         <circle
           cx={center}
@@ -35,7 +40,7 @@ export default function CircularGauge({
           cy={center}
           r={radius}
           fill="none"
-          stroke={stroke}
+          stroke={displayStroke}
           strokeWidth={10}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
@@ -45,13 +50,13 @@ export default function CircularGauge({
       </svg>
       {/* Value overlay */}
       <div
-        className="flex flex-col items-center -mt-[calc(var(--size)/2+2rem)]"
-        style={{ marginTop: `-${size / 2 + 8}px` }}
+        className="flex flex-col items-center justify-center relative z-10"
+        style={{ marginTop: `-${size / 2 + 24}px` }}
       >
-        <span className="text-text font-bold text-2xl leading-tight">
-          {percent.toFixed(0)}%
+        <span className={`font-bold text-3xl leading-tight ${isPositive ? 'text-text' : 'text-red-400'}`}>
+          {isPositive && percent > 0 ? '+' : ''}{percent.toFixed(0)}%
         </span>
-        <span className="text-muted text-xs text-center leading-tight">{label}</span>
+        <span className="text-muted text-xs text-center leading-tight mt-1">{label}</span>
       </div>
     </div>
   );

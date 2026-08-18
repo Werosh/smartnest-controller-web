@@ -36,18 +36,55 @@ async function fetchMonthKwh() {
   return parseFloat(kWh.toFixed(2));
 }
 
+async function fetchLastMonthKwh() {
+  const now = new Date();
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  
+  const { data } = await supabase
+    .from('readings')
+    .select('watts')
+    .gte('at', lastMonthStart.toISOString())
+    .lt('at', thisMonthStart.toISOString());
+
+  if (!data || data.length === 0) return 0;
+  const kWh = data.reduce((sum, r) => sum + r.watts * (4 / 3600 / 1000), 0);
+  return parseFloat(kWh.toFixed(2));
+}
+
 export default function Energy() {
   const [todayKwh, setTodayKwh] = useState(0);
   const [monthKwh, setMonthKwh] = useState(0);
+  const [lastMonthKwh, setLastMonthKwh] = useState(0);
   const [currentW, setCurrentW] = useState(0);
 
-  const savedPct = 18;
   const estBill = (monthKwh * RATE_PER_KWH).toFixed(2);
-  const moneySaved = (monthKwh * RATE_PER_KWH * (savedPct / 100)).toFixed(2);
+  
+  const now = new Date();
+  const daysThisMonth = now.getDate();
+  const daysLastMonth = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+  
+  let savedPct = 0;
+  let moneySaved = '0.00';
+  
+  if (lastMonthKwh > 0) {
+    const dailyAvgThisMonth = monthKwh / daysThisMonth;
+    const dailyAvgLastMonth = lastMonthKwh / daysLastMonth;
+    
+    if (dailyAvgLastMonth > 0) {
+      const ratio = dailyAvgThisMonth / dailyAvgLastMonth;
+      savedPct = Math.round((1 - ratio) * 100);
+    }
+    
+    const estProratedLastMonth = (lastMonthKwh / daysLastMonth) * daysThisMonth * RATE_PER_KWH;
+    const currentCost = monthKwh * RATE_PER_KWH;
+    moneySaved = Math.abs(estProratedLastMonth - currentCost).toFixed(2);
+  }
 
   useEffect(() => {
     fetchTodayKwh().then(setTodayKwh);
     fetchMonthKwh().then(setMonthKwh);
+    fetchLastMonthKwh().then(setLastMonthKwh);
 
     // Initial current wattage fetch
     supabase.from('modules').select('watts').eq('desired_state', true).then(({ data }) => {
@@ -126,10 +163,10 @@ export default function Energy() {
           icon={Leaf}
           label="Money Saved"
           value={`$${moneySaved}`}
-          trend="up"
-          trendVal={`+${savedPct}%`}
-          color="bg-emerald-500/10"
-          iconColor="text-emerald-400"
+          trend={savedPct >= 0 ? 'up' : 'down'}
+          trendVal={`${savedPct >= 0 ? '+' : ''}${savedPct}%`}
+          color={savedPct >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
+          iconColor={savedPct >= 0 ? "text-emerald-400" : "text-red-400"}
         />
       </section>
 
@@ -138,12 +175,16 @@ export default function Energy() {
           <EnergyChart />
         </div>
 
-        <div className="card p-6 flex flex-col items-center justify-center gap-4">
+        <div className="card p-6 flex flex-col items-center justify-center gap-4 relative overflow-hidden group">
+          <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-20 ${savedPct >= 0 ? 'bg-green-500' : 'bg-red-500'} group-hover:opacity-30 transition-opacity`} />
           <h2 className="section-title mb-0 self-start">Energy Saved</h2>
-          <CircularGauge percent={savedPct} label="vs last month" />
-          <p className="text-muted text-xs text-center mt-2">
-            You've saved <span className="text-accent font-semibold">${moneySaved}</span> this month
-            by optimising usage. Keep up the good work!
+          <CircularGauge percent={savedPct} label="vs last month avg" />
+          <p className="text-muted text-xs text-center mt-2 relative z-10">
+            {savedPct >= 0 ? (
+              <>You've saved <span className="text-emerald-400 font-semibold">${moneySaved}</span> this month by optimising usage. Keep up the good work!</>
+            ) : (
+              <>You've spent <span className="text-red-400 font-semibold">${moneySaved}</span> more this month compared to last month. Consider optimising usage.</>
+            )}
           </p>
         </div>
       </section>

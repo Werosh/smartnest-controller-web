@@ -52,6 +52,22 @@ async function fetchMonthKwh() {
   return parseFloat(kWh.toFixed(2));
 }
 
+async function fetchLastMonthKwh() {
+  const now = new Date();
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  
+  const { data } = await supabase
+    .from('readings')
+    .select('watts')
+    .gte('at', lastMonthStart.toISOString())
+    .lt('at', thisMonthStart.toISOString());
+
+  if (!data || data.length === 0) return 0;
+  const kWh = data.reduce((sum, r) => sum + r.watts * (4 / 3600 / 1000), 0);
+  return parseFloat(kWh.toFixed(2));
+}
+
 export default function Dashboard() {
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
@@ -59,6 +75,7 @@ export default function Dashboard() {
   const [modules, setModules] = useState([]);
   const [todayKwh, setTodayKwh] = useState(0);
   const [monthKwh, setMonthKwh] = useState(0);
+  const [lastMonthKwh, setLastMonthKwh] = useState(0);
   const [showAddModal, setShowAddModal] = useState(false);
   const [loadingModules, setLoadingModules] = useState(true);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -66,8 +83,28 @@ export default function Dashboard() {
   // ── Derived stats ─────────────────────────────────────────
   const currentW = modules.filter(m => m.desired_state).reduce((s, m) => s + m.watts, 0);
   const estBill = (monthKwh * RATE_PER_KWH).toFixed(2);
-  const savedPct = 18; // placeholder - would compare last month in production
-  const moneySaved = (monthKwh * RATE_PER_KWH * (savedPct / 100)).toFixed(2);
+  
+  // Real calculation for saved percentage
+  const now = new Date();
+  const daysThisMonth = now.getDate();
+  const daysLastMonth = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+  
+  let savedPct = 0;
+  let moneySaved = '0.00';
+  
+  if (lastMonthKwh > 0) {
+    const dailyAvgThisMonth = monthKwh / daysThisMonth;
+    const dailyAvgLastMonth = lastMonthKwh / daysLastMonth;
+    
+    if (dailyAvgLastMonth > 0) {
+      const ratio = dailyAvgThisMonth / dailyAvgLastMonth;
+      savedPct = Math.round((1 - ratio) * 100);
+    }
+    
+    const estProratedLastMonth = (lastMonthKwh / daysLastMonth) * daysThisMonth * RATE_PER_KWH;
+    const currentCost = monthKwh * RATE_PER_KWH;
+    moneySaved = Math.abs(estProratedLastMonth - currentCost).toFixed(2);
+  }
 
   // ── Fetch modules + subscribe Realtime ───────────────────
   async function fetchModules() {
@@ -81,6 +118,7 @@ export default function Dashboard() {
     fetchModules();
     fetchTodayKwh().then(setTodayKwh);
     fetchMonthKwh().then(setMonthKwh);
+    fetchLastMonthKwh().then(setLastMonthKwh);
 
     const channel = supabase
       .channel('modules-dashboard')
@@ -176,10 +214,10 @@ export default function Dashboard() {
           icon={Leaf}
           label="Money Saved"
           value={`$${moneySaved}`}
-          trend="up"
-          trendVal={`+${savedPct}%`}
-          color="bg-emerald-500/10"
-          iconColor="text-emerald-400"
+          trend={savedPct >= 0 ? 'up' : 'down'}
+          trendVal={`${savedPct >= 0 ? '+' : ''}${savedPct}%`}
+          color={savedPct >= 0 ? "bg-emerald-500/10" : "bg-red-500/10"}
+          iconColor={savedPct >= 0 ? "text-emerald-400" : "text-red-400"}
         />
       </section>
 
@@ -190,7 +228,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Cpu className="w-4 h-4 text-muted" />
-              <h2 className="section-title mb-0">My Modules</h2>
+              <h2 className="section-title mb-0">My Appliances</h2>
               <span className="badge badge-muted">{modules.length}</span>
             </div>
             {isAdmin && (
@@ -200,7 +238,7 @@ export default function Dashboard() {
                 className="btn-primary text-xs py-2 px-3 flex items-center gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Add Module
+                Add Appliance
               </button>
             )}
           </div>
@@ -214,10 +252,10 @@ export default function Dashboard() {
           ) : modules.length === 0 ? (
             <div className="card p-10 flex flex-col items-center justify-center text-muted gap-3">
               <Cpu className="w-10 h-10 opacity-30" />
-              <p className="text-sm">No modules yet</p>
+              <p className="text-sm">No appliances yet</p>
               {isAdmin && (
                 <button onClick={() => setShowAddModal(true)} className="btn-primary text-xs py-2 px-4">
-                  Register First Module
+                  Register First Appliance
                 </button>
               )}
             </div>
@@ -239,12 +277,19 @@ export default function Dashboard() {
         {/* Right column: gauge + quick actions */}
         <div className="flex flex-col gap-4">
           {/* Energy saved gauge */}
-          <div className="card p-6 flex flex-col items-center gap-4">
+          <div className="card p-6 flex flex-col items-center gap-4 relative overflow-hidden group">
+            {/* Soft background glow */}
+            <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-20 ${savedPct >= 0 ? 'bg-green-500' : 'bg-red-500'} group-hover:opacity-30 transition-opacity`} />
+            
             <h2 className="section-title mb-0 self-start">Energy Saved</h2>
-            <CircularGauge percent={savedPct} label="vs last month" />
-            <p className="text-muted text-xs text-center">
-              You've saved <span className="text-accent font-semibold">${moneySaved}</span> this month
-              by optimising usage
+            <CircularGauge percent={savedPct} label="vs last month avg" />
+            
+            <p className="text-muted text-xs text-center mt-2 relative z-10">
+              {savedPct >= 0 ? (
+                <>You've saved <span className="text-emerald-400 font-semibold">${moneySaved}</span> this month by optimising usage</>
+              ) : (
+                <>You've spent <span className="text-red-400 font-semibold">${moneySaved}</span> more this month compared to last month</>
+              )}
             </p>
           </div>
 
@@ -266,7 +311,7 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* Add Module Modal */}
+      {/* Add Appliance Modal */}
       {showAddModal && (
         <AddModuleModal
           onClose={() => setShowAddModal(false)}
@@ -276,8 +321,8 @@ export default function Dashboard() {
 
       {confirmDeleteId && (
         <ConfirmModal
-          title="Delete Module"
-          message="Are you sure you want to delete this module? This action cannot be undone."
+          title="Delete Appliance"
+          message="Are you sure you want to delete this appliance? This action cannot be undone."
           confirmText="Delete"
           onConfirm={handleDeleteConfirm}
           onCancel={() => setConfirmDeleteId(null)}

@@ -70,7 +70,7 @@ export default function ModuleCard({ module, isAdmin, currentUserId, onDelete })
         // Revert on error
         setIsOn(previousState);
         console.error("Failed to toggle module:", error);
-        setErrorMsg("Failed to toggle module: " + error.message);
+        setErrorMsg("Failed to toggle appliance: " + error.message);
       }
     } catch (err) {
       setIsOn(previousState);
@@ -147,7 +147,7 @@ export default function ModuleCard({ module, isAdmin, currentUserId, onDelete })
                     className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete Module
+                    Delete Appliance
                   </button>
                 </div>
               )}

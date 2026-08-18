@@ -42,7 +42,7 @@ export default function SchedulesPanel({ modules }) {
       {scheduled.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-20 text-muted gap-2">
           <Clock className="w-6 h-6 opacity-40" />
-          <p className="text-sm">No active schedules - set a timer on any module</p>
+          <p className="text-sm">No active schedules - set a timer on any appliance</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2">

@@ -10,7 +10,7 @@ import { supabase } from '../lib/supabaseClient';
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { id: 'modules', label: 'Modules', icon: Cpu, path: '/modules' },
+  { id: 'modules', label: 'Appliances', icon: Cpu, path: '/modules' },
   { id: 'energy', label: 'Energy', icon: BarChart2, path: '/energy' },
   { id: 'schedules', label: 'Schedules', icon: Calendar, path: '/schedules' },
   { id: 'alerts', label: 'Alerts', icon: Bell, path: '/alerts' },
