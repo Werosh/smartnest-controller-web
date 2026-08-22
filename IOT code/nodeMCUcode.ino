@@ -57,7 +57,8 @@ String topicCurrent, topicRelaySet, topicRelayState, topicAlert;
 // ── Relay helper ──────────────────────────────────────────────
 void setRelay(bool on) {
   relayState = on;
-  digitalWrite(RELAY_PIN, on ? HIGH : LOW); // flip HIGH/LOW if relay is active-LOW
+  // Active-LOW relay: write LOW to turn ON, HIGH to turn OFF
+  digitalWrite(RELAY_PIN, on ? LOW : HIGH); 
   client.publish(topicRelayState.c_str(), on ? "1" : "0", true); // retained
 }
 
@@ -108,7 +109,7 @@ void setup() {
   Serial.println("\n[BOOT] SmartNest firmware starting...");
 
   pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW);
+  digitalWrite(RELAY_PIN, HIGH); // For Active-LOW relay, HIGH means OFF. Defaults to OFF on boot.
 
   // Build topic strings
   topicCurrent    = String("smartnest/") + DEVICE_ID + "/current";
