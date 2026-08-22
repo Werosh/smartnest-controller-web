@@ -49,8 +49,13 @@ console.log('');
 console.log('╔══════════════════════════════════════════════╗');
 console.log('║          SmartNest V1 - Bridge Worker        ║');
 console.log('╚══════════════════════════════════════════════╝');
-console.log(`  Supabase URL : ${SUPABASE_URL}`);
-console.log(`  Mode         : ${useSimulator ? '🤖 SIMULATOR (mock hardware)' : '📡 REAL MQTT'}`);
+console.log(`  Supabase URL      : ${SUPABASE_URL}`);
+console.log(`  Mode              : ${useSimulator ? '🤖 SIMULATOR (mock hardware)' : '📡 REAL MQTT'}`);
+// ── STEP 1 DEBUG: confirm .env values were loaded (password intentionally omitted) ──
+console.log(`  [ENV] MQTT_URL        = ${MQTT_URL ?? '(not set)'}`);
+console.log(`  [ENV] MQTT_USERNAME   = ${MQTT_USERNAME ?? '(not set)'}`);
+console.log(`  [ENV] SIMULATE_HARDWARE = ${SIMULATE_HARDWARE ?? '(not set — defaults to real MQTT)'}`);
+// ────────────────────────────────────────────────────────────────────────────────────
 if (!useSimulator) {
   console.log(`  MQTT URL     : ${MQTT_URL}`);
 }
@@ -109,6 +114,9 @@ else {
 
   // ── Handle incoming MQTT messages ─────────────────────────
   client.on('message', async (topic, payload) => {
+    // ── STEP 3 DEBUG: raw log before any parsing — remove after debugging ──
+    console.log(`[RAW MSG] topic="${topic}" payload="${payload.toString()}"`);
+    // ──────────────────────────────────────────────────────────────────────
     const parts = topic.split('/');
     if (parts.length < 3 || parts[0] !== 'smartnest') return;
 
