@@ -109,7 +109,11 @@ export default function Dashboard() {
   // ── Fetch modules + subscribe Realtime ───────────────────
   async function fetchModules() {
     if (!profile?.id) return;
-    const { data } = await supabase.from('modules').select('*, owner:profiles(name)').eq('owner_id', profile.id).order('name');
+    let query = supabase.from('modules').select('*, owner:profiles(name)').order('name');
+    if (!isAdmin) {
+      query = query.eq('owner_id', profile.id);
+    }
+    const { data } = await query;
     if (data) setModules(data);
     setLoadingModules(false);
   }

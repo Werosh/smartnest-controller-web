@@ -88,10 +88,7 @@ drop policy if exists "update strictly own" on modules;
 create policy "update strictly own" on modules for update to authenticated
   using (
     (owner_id = auth.uid() and (select status from profiles where id = auth.uid()) = 'active')
-    or (
-      (select role from profiles where id = auth.uid()) = 'admin' 
-      and (select status from profiles where id = owner_id) = 'deactivated'
-    )
+    or (select role from profiles where id = auth.uid()) = 'admin' 
   );
 
 drop policy if exists "insert own or admin modules" on modules;
@@ -102,10 +99,7 @@ drop policy if exists "insert strictly own" on modules;
 create policy "insert strictly own" on modules for insert to authenticated
   with check (
     (owner_id = auth.uid() and (select status from profiles where id = auth.uid()) = 'active')
-    or (
-      (select role from profiles where id = auth.uid()) = 'admin' 
-      and (select status from profiles where id = owner_id) = 'deactivated'
-    )
+    or (select role from profiles where id = auth.uid()) = 'admin'
   );
 
 drop policy if exists "delete own or admin modules" on modules;
@@ -116,10 +110,7 @@ drop policy if exists "delete strictly own" on modules;
 create policy "delete strictly own" on modules for delete to authenticated
   using (
     (owner_id = auth.uid() and (select status from profiles where id = auth.uid()) = 'active')
-    or (
-      (select role from profiles where id = auth.uid()) = 'admin' 
-      and (select status from profiles where id = owner_id) = 'deactivated'
-    )
+    or (select role from profiles where id = auth.uid()) = 'admin'
   );
 
 drop policy if exists "read own readings or admin" on readings;
