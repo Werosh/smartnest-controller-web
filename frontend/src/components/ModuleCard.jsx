@@ -43,6 +43,7 @@ export default function ModuleCard({ module, isAdmin, currentUserId, onDelete })
   const colors = TYPE_COLORS[module.type] ?? TYPE_COLORS.outlet;
   
   const isOwner = module.owner_id === currentUserId;
+  const canManage = isOwner || isAdmin;
 
   // Use local state for optimistic UI updates
   const [isOn, setIsOn] = useState(module.desired_state);
@@ -53,7 +54,7 @@ export default function ModuleCard({ module, isAdmin, currentUserId, onDelete })
   }, [module.desired_state]);
 
   async function handleToggle() {
-    if (toggling || !isOwner) return;
+    if (toggling || !canManage) return;
     
     // Optimistic update
     const previousState = isOn;
@@ -79,8 +80,9 @@ export default function ModuleCard({ module, isAdmin, currentUserId, onDelete })
     }
   }
 
-  async function setTimer() {
-    if (!isOwner) return;
+  async function handleSetTimer(e) {
+    e.preventDefault();
+    if (!canManage) return;
     const mins = parseInt(timerMins, 10);
     if (isNaN(mins) || mins <= 0) return;
     const fireAt = new Date(Date.now() + mins * 60 * 1000).toISOString();
@@ -92,8 +94,8 @@ export default function ModuleCard({ module, isAdmin, currentUserId, onDelete })
     setShowTimer(false);
   }
 
-  async function clearTimer() {
-    if (!isOwner) return;
+  async function handleClearTimer() {
+    if (!canManage) return;
     await supabase
       .from('modules')
       .update({ timer_at: null })
@@ -156,7 +158,7 @@ export default function ModuleCard({ module, isAdmin, currentUserId, onDelete })
           <Toggle
             id={`toggle-${module.id}`}
             checked={isOn}
-            disabled={!isOwner}
+            disabled={!canManage}
             onChange={handleToggle}
           />
         </div>
@@ -186,17 +188,17 @@ export default function ModuleCard({ module, isAdmin, currentUserId, onDelete })
               <Clock className="w-3.5 h-3.5" />
               <span>Turns {isOn ? 'OFF' : 'ON'} in {formatTimer(module.timer_at)}</span>
             </div>
-            {isOwner && (
+            {canManage && (
               <button
-                onClick={clearTimer}
+                onClick={handleClearTimer}
                 className="text-xs text-muted hover:text-red-400 transition-colors"
               >
                 Clear
               </button>
             )}
           </div>
-        ) : showTimer && isOwner ? (
-          <div className="flex items-center gap-2">
+        ) : showTimer && canManage ? (
+          <form onSubmit={handleSetTimer} className="flex gap-2 animate-fade-in">
             <input
               type="number"
               value={timerMins}
@@ -205,15 +207,15 @@ export default function ModuleCard({ module, isAdmin, currentUserId, onDelete })
               min="1"
               className="input text-xs py-1.5 flex-1"
             />
-            <button onClick={setTimer} className="btn-primary text-xs py-1.5 px-3">Set</button>
-            <button onClick={() => setShowTimer(false)} className="btn-ghost text-xs py-1.5 px-2">✕</button>
-          </div>
+            <button type="submit" className="btn-primary text-xs py-1.5 px-3">Set</button>
+            <button type="button" onClick={() => setShowTimer(false)} className="btn-ghost text-xs py-1.5 px-2">✕</button>
+          </form>
         ) : (
           <button
             id={`timer-btn-${module.id}`}
-            onClick={() => isOwner && setShowTimer(true)}
-            disabled={!isOwner}
-            className={`flex items-center gap-1.5 text-xs transition-colors ${isOwner ? 'text-muted hover:text-text' : 'text-muted/50 cursor-not-allowed'}`}
+            onClick={() => canManage && setShowTimer(true)}
+            disabled={!canManage}
+            className={`flex items-center gap-1.5 text-xs transition-colors ${canManage ? 'text-muted hover:text-text' : 'text-muted/50 cursor-not-allowed'}`}
           >
             <Timer className="w-3.5 h-3.5" />
             Set timer
