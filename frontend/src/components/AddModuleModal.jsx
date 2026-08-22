@@ -13,6 +13,7 @@ export default function AddModuleModal({ onClose, onAdded, targetOwnerId = null 
   const { profile: currentProfile } = useAuth();
 
   const [name, setName] = useState('');
+  const [deviceId, setDeviceId] = useState('');
   const [type, setType] = useState('outlet');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
@@ -24,9 +25,10 @@ export default function AddModuleModal({ onClose, onAdded, targetOwnerId = null 
       setError('Module name is required.');
       return;
     }
-    
-    // Auto-generate a secure random ID
-    const generatedId = 'mdl-' + Math.random().toString(16).slice(2, 10);
+    if (!deviceId.trim()) {
+      setError('Hardware Device ID is required.');
+      return;
+    }
     
     const finalOwnerId = targetOwnerId || currentProfile.id;
 
@@ -34,7 +36,7 @@ export default function AddModuleModal({ onClose, onAdded, targetOwnerId = null 
     try {
       const { error: dbErr } = await supabase
         .from('modules')
-        .insert({ id: generatedId, name: name.trim(), type, owner_id: finalOwnerId });
+        .insert({ id: deviceId.trim(), name: name.trim(), type, owner_id: finalOwnerId });
       if (dbErr) throw dbErr;
       onAdded?.();
       onClose();
@@ -74,6 +76,20 @@ export default function AddModuleModal({ onClose, onAdded, targetOwnerId = null 
             />
           </div>
 
+          <div>
+            <label className="block text-xs font-medium text-muted mb-1.5">
+              Hardware Device ID <span className="text-red-400">*</span>
+            </label>
+            <input
+              id="module-id-input"
+              type="text"
+              value={deviceId}
+              onChange={e => setDeviceId(e.target.value)}
+              placeholder="e.g. smartnest01"
+              className="input"
+            />
+            <p className="text-[10px] text-muted mt-1">Must exactly match the DEVICE_ID in your Arduino code.</p>
+          </div>
 
           <div>
             <label className="block text-xs font-medium text-muted mb-2">
