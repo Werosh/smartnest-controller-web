@@ -125,11 +125,11 @@ else {
     // Check for hub status
     if (moduleId === 'hub' && parts[2] === 'status') {
       const status = payload.toString().trim();
-      await supabase
+      const { error } = await supabase
         .from('hub_status')
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', 'main');
-      console.log(`[MQTT] Hub status: ${status}`);
+        .upsert({ id: 'main', status, updated_at: new Date().toISOString() });
+      if (error) console.error('[SUPABASE] hub_status upsert error:', error.message);
+      else console.log(`[MQTT] Hub status → Supabase: ${status}`);
       return;
     }
 
