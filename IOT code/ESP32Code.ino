@@ -84,31 +84,31 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 void reconnectMQTT() {
   while (!client.connected()) {
     String clientId = "smartnest-hub-" + String(random(0xffff), HEX);
-    // last will: if the hub drops offline, the broker announces it automatically
-    if (client.connect(clientId.c_str(), mqtt_user, mqtt_pass,
-                        "smartnest/hub/status", 0, true, "offline")) {
+    Serial.print("[MQTT] Connecting as ");
+    Serial.println(clientId);
+    // Simple connect without LWT — avoids oversized CONNECT packet
+    if (client.connect(clientId.c_str(), mqtt_user, mqtt_pass)) {
+      Serial.println("[MQTT] Connected!");
       client.publish("smartnest/hub/status", "online", true);
       client.subscribe("smartnest/+/current");
       client.subscribe("smartnest/+/relay/state");
       client.subscribe("smartnest/+/alert");
     } else {
-      Serial.print("MQTT connect failed, rc=");
+      Serial.print("[MQTT] Failed, rc=");
       Serial.println(client.state());
-      delay(2000);
+      delay(3000);
     }
   }
 }
 
 void setup() {
   Serial.begin(115200);
-  Serial.print("user len: "); Serial.println(strlen(mqtt_user));
-  Serial.print("pass len: "); Serial.println(strlen(mqtt_pass));
+
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   pinMode(BUZZER_PIN, OUTPUT);
   pinMode(LED_R, OUTPUT); pinMode(LED_G, OUTPUT); pinMode(LED_B, OUTPUT);
   setRGB(false, false, true); // blue while connecting
 
-  configTime(5 * 3600 + 1800, 0, "pool.ntp.org");
 
   Wire.begin();
   display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
@@ -116,6 +116,7 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) delay(500);
+  Serial.println("[WiFi] Connected.");
 
   // ── TLS configuration ─────────────────────────────────────────
   // setInsecure(): skips certificate verification.
