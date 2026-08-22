@@ -161,7 +161,8 @@ void loop() {
     Serial.print(" -> ");
     Serial.println(currentStr);
 
-    // Overcurrent safety cutoff
+    // Overcurrent safety cutoff (temporarily disabled for debugging random toggles)
+    /*
     if (current > MAX_SAFE_CURRENT) {
       overCurrentCount++;
       if (overCurrentCount >= OVERCURRENT_TRIP_READS && relayState) {
@@ -172,5 +173,6 @@ void loop() {
     } else {
       overCurrentCount = 0;
     }
+    */
   }
 }

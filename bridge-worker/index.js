@@ -199,7 +199,11 @@ else {
       'postgres_changes',
       { event: 'UPDATE', schema: 'public', table: 'modules' },
       (payload) => {
-        const { id, desired_state } = payload.new;
+        const { id, desired_state, state } = payload.new;
+        
+        // Prevent infinite loops / spamming: Only send command if the device is not already in the desired state
+        if (desired_state === state) return;
+
         const cmd = desired_state ? '1' : '0';
         const topic = `smartnest/${id}/relay/set`;
 
