@@ -129,11 +129,12 @@ void setup() {
   Serial.println(WiFi.localIP());
 
   // ── TLS configuration ─────────────────────────────────────────
-  // setInsecure(): skips certificate verification.
-  // The connection is still TLS-encrypted — data is protected in transit.
+  // Limit TLS buffer to save RAM on ESP8266 (fixes silent disconnects)
+  espClient.setBufferSizes(1024, 1024);
   espClient.setInsecure();
 
   client.setServer(mqtt_host, mqtt_port);
+  client.setBufferSize(512);
   client.setCallback(mqttCallback);
 
   Serial.println("[TLS] Ready (encrypted, no cert check).");

@@ -123,6 +123,7 @@ void setup() {
   // The connection is still TLS-encrypted — data is protected in transit.
   espClient.setInsecure();
   client.setServer(mqtt_host, mqtt_port);
+  client.setBufferSize(512);
   client.setCallback(mqttCallback);
 
   setRGB(false, true, false); // green once ready
